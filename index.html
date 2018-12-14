@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Matt's Blog Client</title>
+  </head>
+  <body>
+    Loading...
+    <script src="main.js"></script>
+    <script>
+      var credentials = localStorage.getItem('credentials');
+      var app = Elm.Main.init({
+        flags: {
+          micropubUrl: "https://blog-api.mattmoriarity.com/micropub",
+          credentials: credentials ? JSON.parse(credentials) : null
+        }
+      });
+
+      app.ports.storeCredentials.subscribe(function(data) {
+        localStorage.setItem('credentials', JSON.stringify(data));
+      });
+    </script>
+  </body>
+</html>
