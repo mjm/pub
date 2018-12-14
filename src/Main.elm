@@ -3,6 +3,7 @@ port module Main exposing (main)
 import Browser
 import Browser.Navigation as Nav
 import Html exposing (..)
+import Html.Attributes exposing (..)
 import Http
 import IndieAuth as Auth
 import Json.Decode as D

@@ -9,8 +9,8 @@ module Page.Login exposing
 import Browser
 import Browser.Navigation as Nav
 import Html exposing (..)
-import Html.Attributes exposing (placeholder, type_, value)
-import Html.Events exposing (onClick, onInput)
+import Html.Attributes exposing (..)
+import Html.Events exposing (onClick, onInput, onSubmit)
 import Session
 import Url.Builder as UB
 
@@ -68,20 +68,31 @@ loadAuthPage url =
 
 view : Model -> Browser.Document Message
 view model =
-    { title = "Login"
+    { title = "Login to your Blog"
     , body =
-        [ header []
-            [ h1 [] [ text "Login to Blog Client" ] ]
-        , p [] [ text "You need to login to access this tool" ]
-        , section []
-            [ input
-                [ type_ "text"
-                , placeholder "https://example.com"
-                , value model.siteUrl
-                , onInput SetSiteUrl
+        [ div [ class "w-1/3 bg-white mx-auto mt-16 p-6 shadow-md rounded-lg" ]
+            [ header []
+                [ h1 [ class "text-orange-darkest font-thin text-center" ] [ text "Log in to your blog" ] ]
+            , p [ class "text-center text-grey-darker text-sm my-4" ]
+                [ text "Enter your domain to log in using IndieAuth." ]
+            , Html.form [ onSubmit Login ]
+                [ div [ class "flex items-center py-2 border-orange border-b" ]
+                    [ input
+                        [ class "appearance-none w-full bg-transparent border-none focus:outline-none"
+                        , type_ "text"
+                        , placeholder "https://example.com"
+                        , value model.siteUrl
+                        , autofocus True
+                        , onInput SetSiteUrl
+                        ]
+                        []
+                    , button
+                        [ type_ "submit"
+                        , class "flex-no-shrink bg-orange hover:bg-orange-dark border-4 border-orange hover:border-orange-dark text-white text-md py-1 px-2 rounded"
+                        ]
+                        [ text "Login" ]
+                    ]
                 ]
-                []
-            , button [ onClick Login ] [ text "Login" ]
             ]
         ]
     }
