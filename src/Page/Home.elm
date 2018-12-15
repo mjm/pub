@@ -64,16 +64,21 @@ view model =
                 , navHeader "Pages"
                 , navHeader "Templates"
                 ]
-            , div [ class "flex flex-col w-3/4 xl:w-4/5 bg-white" ]
+            , div [ class "flex flex-col w-3/4 xl:w-4/5 bg-white p-4" ]
                 (case model.config of
                     Nothing ->
                         [ p [] [ text "Loading post types..." ] ]
 
                     Just cfg ->
                         [ p [] [ text "This blog supports the following post types:" ]
-                        , ul []
+                        , ul [ class "list-reset flex mt-4" ]
                             (List.map
-                                (\t -> li [] [ text (MP.postTypeName t) ])
+                                (\t ->
+                                    li []
+                                        [ button [ class "text-sm font-bold bg-blue-dark text-white px-3 py-2 mx-2 rounded" ]
+                                            [ text (MP.postTypeName t) ]
+                                        ]
+                                )
                                 (MP.postTypes cfg)
                             )
                         ]
