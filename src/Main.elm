@@ -40,6 +40,11 @@ type alias Flags =
     }
 
 
+micropubUrl : String
+micropubUrl =
+    "https://blog-api.mattmoriarity.com/micropub"
+
+
 init : Flags -> Url.Url -> Nav.Key -> ( Model, Cmd Message )
 init flags url key =
     let
@@ -49,7 +54,7 @@ init flags url key =
         session =
             case tokenResult of
                 Ok token ->
-                    Session.addToken token Session.empty
+                    Session.login micropubUrl token Session.empty
 
                 Err _ ->
                     Session.empty
@@ -73,7 +78,7 @@ getSession model =
             session
 
         Home home ->
-            home.session
+            Session.LoggedIn home.session
 
 
 view : Model -> Browser.Document Message
@@ -158,7 +163,7 @@ update message model =
 
 saveToken : Auth.AuthorizedToken -> Model -> ( Model, Cmd Message )
 saveToken token model =
-    ( { model | page = LoggingIn (Session.addToken token (getSession model)) }
+    ( { model | page = LoggingIn (Session.login micropubUrl token (getSession model)) }
     , Cmd.batch
         [ Nav.pushUrl model.key "/"
         , storeCredentials (Auth.encodeToken token)
@@ -216,12 +221,12 @@ stepUrl url model =
             )
 
         Just HomeRoute ->
-            case session.token of
-                Nothing ->
-                    ( { model | page = NotFound session }, Cmd.none )
+            case session of
+                Session.Guest ->
+                    ( { model | page = NotFound session }, Nav.pushUrl model.key "/login" )
 
-                Just token ->
-                    stepHome model (Home.init session token)
+                Session.LoggedIn sess ->
+                    stepHome model (Home.init sess)
 
         _ ->
             ( { model | page = NotFound session }, Cmd.none )

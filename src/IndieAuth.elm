@@ -1,4 +1,4 @@
-module IndieAuth exposing (AuthorizedToken, authorizeToken, encodeToken, tokenDecoder)
+module IndieAuth exposing (AuthorizedToken, authorizeToken, encodeToken, header, tokenDecoder)
 
 import Http
 import Json.Decode as D
@@ -13,6 +13,11 @@ type alias AuthorizedToken =
     , me : String
     , scopes : List String
     }
+
+
+header : AuthorizedToken -> Http.Header
+header token =
+    Http.header "Authorization" ("Bearer " ++ token.accessToken)
 
 
 authorizeToken : (Result Http.Error AuthorizedToken -> msg) -> String -> String -> String -> Cmd msg

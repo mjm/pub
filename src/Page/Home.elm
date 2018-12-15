@@ -10,32 +10,43 @@ import Browser
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
+import Http
 import IndieAuth as Auth
+import Micropub as MP
 import Session
 
 
 type alias Model =
-    { session : Session.Data
-    , token : Auth.AuthorizedToken
+    { session : Session.LoggedInData
+    , config : Maybe MP.Config
     }
 
 
-init : Session.Data -> Auth.AuthorizedToken -> ( Model, Cmd Message )
-init session token =
+init : Session.LoggedInData -> ( Model, Cmd Message )
+init session =
     ( { session = session
-      , token = token
+      , config = Nothing
       }
-    , Cmd.none
+    , MP.getConfig session.micropub GotConfig
     )
 
 
 type Message
     = NoOp
+    | GotConfig (Result Http.Error MP.Config)
 
 
 update : Message -> Model -> ( Model, Cmd Message )
 update msg model =
-    ( model, Cmd.none )
+    case msg of
+        NoOp ->
+            ( model, Cmd.none )
+
+        GotConfig (Ok cfg) ->
+            ( { model | config = Just cfg }, Cmd.none )
+
+        GotConfig (Err _) ->
+            ( model, Cmd.none )
 
 
 view : Model -> Browser.Document Message
@@ -53,7 +64,20 @@ view model =
                 , navHeader "Pages"
                 , navHeader "Templates"
                 ]
-            , div [ class "flex flex-col w-3/4 xl:w-4/5 bg-white" ] [ text "content" ]
+            , div [ class "flex flex-col w-3/4 xl:w-4/5 bg-white" ]
+                (case model.config of
+                    Nothing ->
+                        [ p [] [ text "Loading post types..." ] ]
+
+                    Just cfg ->
+                        [ p [] [ text "This blog supports the following post types:" ]
+                        , ul []
+                            (List.map
+                                (\t -> li [] [ text (MP.postTypeName t) ])
+                                (MP.postTypes cfg)
+                            )
+                        ]
+                )
             ]
         ]
     }

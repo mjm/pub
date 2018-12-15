@@ -1,26 +1,35 @@
 module Session exposing
-    ( Data
-    , addToken
+    ( Data(..)
+    , LoggedInData
     , empty
+    , login
+    , wrapLoggedIn
     )
 
 import IndieAuth as Auth
 import Micropub
 
 
-type alias Data =
-    { endpoint : Maybe Micropub.Endpoint
-    , token : Maybe Auth.AuthorizedToken
+type Data
+    = Guest
+    | LoggedIn LoggedInData
+
+
+type alias LoggedInData =
+    { micropub : Micropub.Session
     }
 
 
 empty : Data
 empty =
-    { endpoint = Nothing
-    , token = Nothing
-    }
+    Guest
 
 
-addToken : Auth.AuthorizedToken -> Data -> Data
-addToken token data =
-    { data | token = Just token }
+login : String -> Auth.AuthorizedToken -> Data -> Data
+login endpointUrl token _ =
+    LoggedIn { micropub = Micropub.login endpointUrl token }
+
+
+wrapLoggedIn : LoggedInData -> Data
+wrapLoggedIn =
+    LoggedIn
