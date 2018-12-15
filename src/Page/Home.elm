@@ -54,15 +54,17 @@ view model =
     { title = "It's Bloggin' Time!"
     , body =
         [ div [ class "flex h-screen" ]
-            [ nav [ class "flex flex-col w-1/4 xl:w-1/5 py-2 min-h-screen bg-orange-lightest shadow-md z-30" ]
+            [ nav [ class "flex flex-col w-1/4 xl:w-1/5 min-h-screen bg-orange-lightest shadow-lg z-30 pt-2" ]
                 [ navHeader "Posts"
-                , div [ class "flex-row overflow-auto" ]
+                , div [ class "flex-row" ]
                     [ ul [ class "list-reset text-sm" ]
-                        [ li [ class "text-orange-darkest m-4 truncate" ] [ text "This is a post about some stuff that happened one time" ]
+                        [ li [ class "text-orange-darkest m-3 truncate" ] [ text "This is a post about some stuff that happened one time" ]
                         ]
                     ]
                 , navHeader "Pages"
+                , p [ class "text-orange-darkest m-3 text-sm" ] [ text "No pages" ]
                 , navHeader "Templates"
+                , p [ class "text-orange-darkest m-3 text-sm" ] [ text "No templates" ]
                 ]
             , div [ class "flex flex-col w-3/4 xl:w-4/5 bg-white p-4" ]
                 (case model.config of
@@ -94,7 +96,7 @@ navHeader title =
         [ a
             [ href "#"
             , onClick NoOp
-            , class "text-orange-darker no-underline block px-3 pb-1 pt-2 mx-3 my-1 text-xs bg-white border-b-4 border-orange-light shadow-md"
+            , class "mt-2 uppercase text-orange no-underline block px-3 text-xs"
             ]
-            [ h3 [ class "font-semibold" ] [ text title ] ]
+            [ h4 [ class "font-bold" ] [ text title ] ]
         ]
