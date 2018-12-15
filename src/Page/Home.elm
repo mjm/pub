@@ -89,7 +89,7 @@ navHeader title =
         [ a
             [ href "#"
             , onClick NoOp
-            , class "text-orange-darker no-underline block px-3 py-2 mx-3 my-1 text-xs bg-white rounded-lg shadow"
+            , class "text-orange-darker no-underline block px-3 pb-1 pt-2 mx-3 my-1 text-xs bg-white border-b-4 border-orange-light shadow-md"
             ]
-            [ h2 [ class "font-normal" ] [ text title ] ]
+            [ h3 [ class "font-semibold" ] [ text title ] ]
         ]
