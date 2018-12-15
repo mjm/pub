@@ -8,6 +8,8 @@ module Page.Home exposing
 
 import Browser
 import Html exposing (..)
+import Html.Attributes exposing (..)
+import Html.Events exposing (onClick)
 import IndieAuth as Auth
 import Session
 
@@ -40,8 +42,30 @@ view : Model -> Browser.Document Message
 view model =
     { title = "It's Bloggin' Time!"
     , body =
-        [ h1 [] [ text "You're logged in!" ]
-        , p [] [ text <| "You signed in with your site " ++ model.token.me ]
-        , p [] [ text <| "Your auth token is " ++ model.token.accessToken ]
+        [ div [ class "flex h-screen" ]
+            [ nav [ class "flex flex-col w-1/4 xl:w-1/5 py-2 min-h-screen bg-orange-lightest shadow-md z-30" ]
+                [ navHeader "Posts"
+                , div [ class "flex-row overflow-auto" ]
+                    [ ul [ class "list-reset text-sm" ]
+                        [ li [ class "text-orange-darkest m-4 truncate" ] [ text "This is a post about some stuff that happened one time" ]
+                        ]
+                    ]
+                , navHeader "Pages"
+                , navHeader "Templates"
+                ]
+            , div [ class "flex flex-col w-3/4 xl:w-4/5 bg-white" ] [ text "content" ]
+            ]
         ]
     }
+
+
+navHeader : String -> Html Message
+navHeader title =
+    div [ class "flex-row" ]
+        [ a
+            [ href "#"
+            , onClick NoOp
+            , class "text-orange-darker no-underline block px-3 py-2 mx-3 my-1 text-xs bg-white rounded-lg shadow"
+            ]
+            [ h2 [ class "font-normal" ] [ text title ] ]
+        ]
