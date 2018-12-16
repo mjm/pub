@@ -13,12 +13,14 @@ import Html.Events exposing (onClick)
 import Http
 import IndieAuth as Auth
 import Micropub as MP
+import Micropub.Html as MPH
 import Session
 
 
 type alias Model =
     { session : Session.LoggedInData
     , config : Maybe MP.Config
+    , pageData : Maybe MPH.Data
     }
 
 
@@ -26,14 +28,19 @@ init : Session.LoggedInData -> ( Model, Cmd Message )
 init session =
     ( { session = session
       , config = Nothing
+      , pageData = Nothing
       }
-    , MP.getConfig session.micropub GotConfig
+    , Cmd.batch
+        [ MP.getConfig session.micropub GotConfig
+        , MPH.load GotPageData session.micropub.token.me
+        ]
     )
 
 
 type Message
     = NoOp
     | GotConfig (Result Http.Error MP.Config)
+    | GotPageData (Result Http.Error MPH.Data)
 
 
 update : Message -> Model -> ( Model, Cmd Message )
@@ -46,6 +53,12 @@ update msg model =
             ( { model | config = Just cfg }, Cmd.none )
 
         GotConfig (Err _) ->
+            ( model, Cmd.none )
+
+        GotPageData (Ok data) ->
+            ( { model | pageData = Just data }, Cmd.none )
+
+        GotPageData (Err _) ->
             ( model, Cmd.none )
 
 
