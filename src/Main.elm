@@ -14,6 +14,7 @@ import Page.EditPost as EditPost
 import Page.Home as Home
 import Page.Login as Login
 import Session
+import Skeleton
 import Url
 import Url.Builder as UB
 import Url.Parser exposing ((</>), (<?>), Parser, map, parse, s, string, top)
@@ -42,11 +43,6 @@ type Page
 type alias Flags =
     { session : E.Value
     }
-
-
-micropubUrl : String
-micropubUrl =
-    "https://blog-api.mattmoriarity.com/micropub"
 
 
 init : Flags -> Url.Url -> Nav.Key -> ( Model, Cmd Message )
@@ -94,10 +90,10 @@ view model =
             mapDocument LoginMsg (Login.view login)
 
         Home home ->
-            mapDocument HomeMsg (Home.view home)
+            Skeleton.view HomeMsg (Home.view home)
 
         EditPost edit ->
-            mapDocument EditPostMsg (EditPost.view edit)
+            Skeleton.view EditPostMsg (EditPost.view edit)
 
 
 mapDocument : (a -> msg) -> Browser.Document a -> Browser.Document msg
