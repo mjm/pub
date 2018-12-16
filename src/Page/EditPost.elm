@@ -55,13 +55,18 @@ update msg model =
             ( model, Cmd.none )
 
         SetName name ->
-            ( model, Cmd.none )
+            ( updatePost (Microformats.setString "name" name) model, Cmd.none )
 
-        SetContent name ->
-            ( model, Cmd.none )
+        SetContent content ->
+            ( updatePost (Microformats.setString "content" content) model, Cmd.none )
 
         SavePost ->
             ( model, Cmd.none )
+
+
+updatePost : (Microformats.Item -> Microformats.Item) -> Model -> Model
+updatePost f model =
+    { model | post = Maybe.map f model.post }
 
 
 view : Model -> Skeleton.Details Message
@@ -102,7 +107,7 @@ editPost item =
             ]
         , div [ class "flex flex-col flex-grow mt-2" ]
             [ textarea
-                [ class "w-full flex-grow focus:outline-none"
+                [ class "w-full flex-grow focus:outline-none leading-normal"
                 , onInput SetContent
                 , value (Maybe.withDefault "" (Microformats.string "content" item))
                 ]

@@ -20,7 +20,7 @@ view toMsg details =
     { title = details.title
     , body =
         [ div [ class "flex h-screen" ]
-            [ nav [ class "flex flex-col w-1/4 xl:w-1/5 min-h-screen bg-orange-lightest shadow-lg z-30 pt-2" ]
+            [ nav [ class "flex flex-col w-1/4 xl:w-1/5 min-h-screen bg-orange-lightest shadow-lg z-30 pt-2 overflow-y-auto" ]
                 [ navHeader "Posts"
                 , div [ class "flex-row" ]
                     [ sidebarPosts details.session ]

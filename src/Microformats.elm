@@ -1,4 +1,15 @@
-module Microformats exposing (Item, Parsed, PropertyValue(..), decoder, encodeItem, feedEntries, getLink, itemDecoder, string)
+module Microformats exposing
+    ( Item
+    , Parsed
+    , PropertyValue(..)
+    , decoder
+    , encodeItem
+    , feedEntries
+    , getLink
+    , itemDecoder
+    , setString
+    , string
+    )
 
 import Dict exposing (Dict)
 import ElmEscapeHtml exposing (unescape)
@@ -135,3 +146,12 @@ string prop item =
 
         _ ->
             Nothing
+
+
+setString : String -> String -> Item -> Item
+setString prop val item =
+    if String.isEmpty val then
+        { item | properties = Dict.remove prop item.properties }
+
+    else
+        { item | properties = Dict.insert prop [ Str val ] item.properties }
