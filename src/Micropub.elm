@@ -2,6 +2,7 @@ module Micropub exposing
     ( Config
     , Session
     , getConfig
+    , getPost
     , login
     , postTypeName
     , postTypes
@@ -11,6 +12,8 @@ import Http
 import IndieAuth as Auth
 import Json.Decode as D
 import Json.Decode.Pipeline exposing (optional, required)
+import Microformats
+import Url.Builder as UB
 
 
 type alias Session =
@@ -102,6 +105,27 @@ getConfig session msg =
         , url = session.url ++ "?q=config"
         , body = Http.emptyBody
         , expect = Http.expectJson msg decodeConfig
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+getPost : String -> Session -> (Result Http.Error Microformats.Item -> msg) -> Cmd msg
+getPost url session msg =
+    let
+        reqUrl =
+            session.url
+                ++ UB.toQuery
+                    [ UB.string "q" "source"
+                    , UB.string "url" url
+                    ]
+    in
+    Http.request
+        { method = "GET"
+        , headers = [ Auth.header session.token ]
+        , url = reqUrl
+        , body = Http.emptyBody
+        , expect = Http.expectJson msg Microformats.itemDecoder
         , timeout = Nothing
         , tracker = Nothing
         }

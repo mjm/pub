@@ -1,4 +1,4 @@
-module Microformats exposing (Item, Parsed, PropertyValue(..), decoder, feedEntries, getLink, string)
+module Microformats exposing (Item, Parsed, PropertyValue(..), decoder, feedEntries, getLink, itemDecoder, string)
 
 import Dict exposing (Dict)
 import ElmEscapeHtml exposing (unescape)

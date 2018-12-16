@@ -9,7 +9,7 @@ module Page.Home exposing
 import Browser
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (onClick)
+import Html.Events.Extra exposing (onClickPreventDefault)
 import Http
 import IndieAuth as Auth
 import Microformats
@@ -22,6 +22,7 @@ type alias Model =
     { session : Session.LoggedInData
     , config : Maybe MP.Config
     , pageData : Maybe MPH.Data
+    , editingPost : Maybe Microformats.Item
     }
 
 
@@ -30,6 +31,7 @@ init session =
     ( { session = session
       , config = Nothing
       , pageData = Nothing
+      , editingPost = Nothing
       }
     , Cmd.batch
         [ MP.getConfig session.micropub GotConfig
@@ -42,6 +44,8 @@ type Message
     = NoOp
     | GotConfig (Result Http.Error MP.Config)
     | GotPageData (Result Http.Error MPH.Data)
+    | EditPost Microformats.Item
+    | GotPostToEdit (Result Http.Error Microformats.Item)
 
 
 update : Message -> Model -> ( Model, Cmd Message )
@@ -62,6 +66,20 @@ update msg model =
         GotPageData (Err _) ->
             ( model, Cmd.none )
 
+        EditPost item ->
+            case Microformats.string "url" item of
+                Just url ->
+                    ( model, MP.getPost url model.session.micropub GotPostToEdit )
+
+                Nothing ->
+                    ( model, Cmd.none )
+
+        GotPostToEdit (Ok item) ->
+            ( { model | editingPost = Just item }, Cmd.none )
+
+        GotPostToEdit (Err _) ->
+            ( model, Cmd.none )
+
 
 view : Model -> Browser.Document Message
 view model =
@@ -78,24 +96,33 @@ view model =
                 , p [ class "text-orange-darkest m-3 text-sm" ] [ text "No templates" ]
                 ]
             , div [ class "flex flex-col w-3/4 xl:w-4/5 bg-white p-4" ]
-                (case model.config of
-                    Nothing ->
-                        [ p [] [ text "Loading post types..." ] ]
+                [ div []
+                    (case model.config of
+                        Nothing ->
+                            [ p [] [ text "Loading post types..." ] ]
 
-                    Just cfg ->
-                        [ p [] [ text "This blog supports the following post types:" ]
-                        , ul [ class "list-reset flex mt-4" ]
-                            (List.map
-                                (\t ->
-                                    li []
-                                        [ button [ class "text-sm font-bold bg-blue-dark text-white px-3 py-2 mx-2 rounded" ]
-                                            [ text (MP.postTypeName t) ]
-                                        ]
+                        Just cfg ->
+                            [ p [] [ text "This blog supports the following post types:" ]
+                            , ul [ class "list-reset flex mt-4" ]
+                                (List.map
+                                    (\t ->
+                                        li []
+                                            [ button [ class "text-sm font-bold bg-blue-dark text-white px-3 py-2 mx-2 rounded" ]
+                                                [ text (MP.postTypeName t) ]
+                                            ]
+                                    )
+                                    (MP.postTypes cfg)
                                 )
-                                (MP.postTypes cfg)
-                            )
-                        ]
-                )
+                            ]
+                    )
+                , case model.editingPost of
+                    Nothing ->
+                        text ""
+
+                    Just p ->
+                        Html.form []
+                            [ textarea [ value (Maybe.withDefault "" (Microformats.string "content" p)) ] [] ]
+                ]
             ]
         ]
     }
@@ -105,8 +132,7 @@ navHeader : String -> Html Message
 navHeader title =
     div [ class "flex-row" ]
         [ a
-            [ href "#"
-            , onClick NoOp
+            [ onClickPreventDefault NoOp
             , class "mt-2 uppercase text-orange no-underline block px-3 text-xs"
             ]
             [ h4 [ class "font-bold" ] [ text title ] ]
@@ -128,4 +154,10 @@ sidebarPosts model =
 sidebarPost : Microformats.Item -> Html Message
 sidebarPost item =
     li [ class "text-orange-darkest m-3 truncate" ]
-        [ text (Maybe.withDefault "Untitled" (Microformats.string "name" item)) ]
+        [ a
+            [ class "block"
+            , onClickPreventDefault (EditPost item)
+            , href "#"
+            ]
+            [ text (Maybe.withDefault "Untitled" (Microformats.string "name" item)) ]
+        ]
