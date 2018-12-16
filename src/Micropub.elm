@@ -164,8 +164,8 @@ getConfig msg session =
         }
 
 
-getPost : String -> Session -> (Result Http.Error Microformats.Item -> msg) -> Cmd msg
-getPost url session msg =
+getPost : (Result Http.Error Microformats.Item -> msg) -> String -> Session -> Cmd msg
+getPost msg url session =
     let
         reqUrl =
             session.url

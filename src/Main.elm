@@ -10,6 +10,7 @@ import Json.Decode as D
 import Json.Encode as E
 import Micropub as MP
 import Micropub.Html as MPH
+import Page.EditPost as EditPost
 import Page.Home as Home
 import Page.Login as Login
 import Session
@@ -35,6 +36,7 @@ type Page
     = NotFound Session.Data
     | Login Login.Model
     | Home Home.Model
+    | EditPost EditPost.Model
 
 
 type alias Flags =
@@ -73,6 +75,9 @@ getSession model =
         Home home ->
             Session.LoggedIn home.session
 
+        EditPost edit ->
+            Session.LoggedIn edit.session
+
 
 view : Model -> Browser.Document Message
 view model =
@@ -91,6 +96,9 @@ view model =
         Home home ->
             mapDocument HomeMsg (Home.view home)
 
+        EditPost edit ->
+            mapDocument EditPostMsg (EditPost.view edit)
+
 
 mapDocument : (a -> msg) -> Browser.Document a -> Browser.Document msg
 mapDocument f doc =
@@ -105,6 +113,7 @@ type Message
     | UrlChanged Url.Url
     | LoginMsg Login.Message
     | HomeMsg Home.Message
+    | EditPostMsg EditPost.Message
 
 
 update : Message -> Model -> ( Model, Cmd Message )
@@ -138,6 +147,14 @@ update message model =
                 _ ->
                     ( model, Cmd.none )
 
+        EditPostMsg msg ->
+            case model.page of
+                EditPost edit ->
+                    stepEditPost model (EditPost.update msg edit)
+
+                _ ->
+                    ( model, Cmd.none )
+
 
 stepLogin : Model -> ( Login.Model, Cmd Login.Message ) -> ( Model, Cmd Message )
 stepLogin model ( login, cmds ) =
@@ -153,6 +170,13 @@ stepHome model ( home, cmds ) =
     )
 
 
+stepEditPost : Model -> ( EditPost.Model, Cmd EditPost.Message ) -> ( Model, Cmd Message )
+stepEditPost model ( edit, cmds ) =
+    ( { model | page = EditPost edit }
+    , Cmd.map EditPostMsg cmds
+    )
+
+
 subscriptions : Model -> Sub Message
 subscriptions model =
     Sub.none
@@ -161,6 +185,7 @@ subscriptions model =
 type Route
     = LoginRoute (Maybe Auth.Callback)
     | HomeRoute
+    | EditPostRoute (Maybe String)
 
 
 routeParser : Parser (Route -> a) a
@@ -169,6 +194,7 @@ routeParser =
         [ map HomeRoute top
         , map (LoginRoute Nothing) (s "login")
         , map LoginRoute (s "callback" <?> callbackParamsParser)
+        , map EditPostRoute (s "posts" </> s "edit" <?> Query.string "url")
         ]
 
 
@@ -193,6 +219,14 @@ stepUrl url model =
     let
         session =
             getSession model
+
+        requireLoggedIn next =
+            case session of
+                Session.LoggedIn sess ->
+                    next sess
+
+                _ ->
+                    ( { model | page = NotFound session }, Nav.pushUrl model.key "/login" )
     in
     case parse routeParser url of
         Just (LoginRoute callback) ->
@@ -206,12 +240,14 @@ stepUrl url model =
                 |> stepLogin model
 
         Just HomeRoute ->
-            case session of
-                Session.LoggedIn sess ->
+            requireLoggedIn
+                (\sess ->
                     stepHome model (Home.init sess)
+                )
 
-                _ ->
-                    ( { model | page = NotFound session }, Nav.pushUrl model.key "/login" )
+        Just (EditPostRoute (Just u)) ->
+            requireLoggedIn
+                (\sess -> stepEditPost model (EditPost.init sess u))
 
         _ ->
             ( { model | page = NotFound session }, Cmd.none )
