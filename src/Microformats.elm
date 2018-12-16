@@ -1,6 +1,7 @@
-module Microformats exposing (Item, Parsed, PropertyValue(..), decoder, feedEntries, getLink)
+module Microformats exposing (Item, Parsed, PropertyValue(..), decoder, feedEntries, getLink, string)
 
 import Dict exposing (Dict)
+import ElmEscapeHtml exposing (unescape)
 import Json.Decode as D
 import Json.Decode.Pipeline exposing (optional, required)
 
@@ -51,8 +52,8 @@ propertiesDecoder =
 propertyDecoder : D.Decoder PropertyValue
 propertyDecoder =
     D.oneOf
-        [ D.map Str D.string
-        , D.map2 Embedded (D.field "value" D.string) (D.field "html" D.string)
+        [ D.map Str escapedString
+        , D.map2 Embedded (D.field "value" escapedString) (D.field "html" escapedString)
         , D.map Child (D.lazy (\_ -> itemDecoder))
         ]
 
@@ -65,6 +66,11 @@ childrenDecoder =
 relsDecoder : D.Decoder (Dict String (List String))
 relsDecoder =
     D.dict (D.list D.string)
+
+
+escapedString : D.Decoder String
+escapedString =
+    D.map unescape D.string
 
 
 getLink : String -> Parsed -> Maybe String
@@ -87,3 +93,13 @@ feedEntries parsed =
                     Children items ->
                         items
             )
+
+
+string : String -> Item -> Maybe String
+string prop item =
+    case Dict.get prop item.properties of
+        Just ((Str x) :: _) ->
+            Just x
+
+        _ ->
+            Nothing

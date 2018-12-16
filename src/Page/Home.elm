@@ -12,6 +12,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 import Http
 import IndieAuth as Auth
+import Microformats
 import Micropub as MP
 import Micropub.Html as MPH
 import Session
@@ -70,10 +71,7 @@ view model =
             [ nav [ class "flex flex-col w-1/4 xl:w-1/5 min-h-screen bg-orange-lightest shadow-lg z-30 pt-2" ]
                 [ navHeader "Posts"
                 , div [ class "flex-row" ]
-                    [ ul [ class "list-reset text-sm" ]
-                        [ li [ class "text-orange-darkest m-3 truncate" ] [ text "This is a post about some stuff that happened one time" ]
-                        ]
-                    ]
+                    [ sidebarPosts model ]
                 , navHeader "Pages"
                 , p [ class "text-orange-darkest m-3 text-sm" ] [ text "No pages" ]
                 , navHeader "Templates"
@@ -113,3 +111,21 @@ navHeader title =
             ]
             [ h4 [ class "font-bold" ] [ text title ] ]
         ]
+
+
+sidebarPosts : Model -> Html Message
+sidebarPosts model =
+    case model.pageData of
+        Nothing ->
+            p [] [ text "Loading posts..." ]
+
+        Just pd ->
+            ul [ class "list-reset text-sm" ] <|
+                List.map sidebarPost
+                    pd.entries
+
+
+sidebarPost : Microformats.Item -> Html Message
+sidebarPost item =
+    li [ class "text-orange-darkest m-3 truncate" ]
+        [ text (Maybe.withDefault "Untitled" (Microformats.string "name" item)) ]
