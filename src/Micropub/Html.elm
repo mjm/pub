@@ -1,8 +1,9 @@
-module Micropub.Html exposing (Data, load)
+module Micropub.Html exposing (Data, encodeLocal, load, localDecoder)
 
 import Dict
 import Http
 import Json.Decode as D
+import Json.Decode.Pipeline exposing (required)
 import Json.Encode as E
 import Microformats
 
@@ -40,3 +41,27 @@ convertToData parsed =
     , tokenEndpoint = Microformats.getLink "token_endpoint" parsed
     , entries = Microformats.feedEntries parsed
     }
+
+
+localDecoder : D.Decoder Data
+localDecoder =
+    D.succeed Data
+        |> required "micropub" (D.nullable D.string)
+        |> required "authorization_endpoint" (D.nullable D.string)
+        |> required "token_endpoint" (D.nullable D.string)
+        |> required "entries" (D.list Microformats.itemDecoder)
+
+
+encodeLocal : Data -> E.Value
+encodeLocal data =
+    E.object
+        [ ( "micropub", encodeMaybeString data.micropubEndpoint )
+        , ( "authorization_endpoint", encodeMaybeString data.authorizationEndpoint )
+        , ( "token_endpoint", encodeMaybeString data.tokenEndpoint )
+        , ( "entries", E.list Microformats.encodeItem data.entries )
+        ]
+
+
+encodeMaybeString : Maybe String -> E.Value
+encodeMaybeString str =
+    Maybe.withDefault E.null (Maybe.map E.string str)

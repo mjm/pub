@@ -1,9 +1,10 @@
-module Microformats exposing (Item, Parsed, PropertyValue(..), decoder, feedEntries, getLink, itemDecoder, string)
+module Microformats exposing (Item, Parsed, PropertyValue(..), decoder, encodeItem, feedEntries, getLink, itemDecoder, string)
 
 import Dict exposing (Dict)
 import ElmEscapeHtml exposing (unescape)
 import Json.Decode as D
 import Json.Decode.Pipeline exposing (optional, required)
+import Json.Encode as E
 
 
 type alias Parsed =
@@ -66,6 +67,37 @@ childrenDecoder =
 relsDecoder : D.Decoder (Dict String (List String))
 relsDecoder =
     D.dict (D.list D.string)
+
+
+encodeItem : Item -> E.Value
+encodeItem item =
+    let
+        children =
+            case item.children of
+                Children x ->
+                    x
+    in
+    E.object
+        [ ( "type", E.list E.string [ item.type_ ] )
+        , ( "properties", E.dict identity (E.list encodeProperty) item.properties )
+        , ( "children", E.list encodeItem children )
+        ]
+
+
+encodeProperty : PropertyValue -> E.Value
+encodeProperty val =
+    case val of
+        Str s ->
+            E.string s
+
+        Embedded value html ->
+            E.object
+                [ ( "value", E.string value )
+                , ( "html", E.string html )
+                ]
+
+        Child item ->
+            encodeItem item
 
 
 escapedString : D.Decoder String

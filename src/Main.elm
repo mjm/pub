@@ -9,6 +9,7 @@ import IndieAuth as Auth
 import Json.Decode as D
 import Json.Encode as E
 import Micropub as MP
+import Micropub.Html as MPH
 import Page.Home as Home
 import Page.Login as Login
 import Session
@@ -18,7 +19,10 @@ import Url.Parser exposing ((</>), (<?>), Parser, map, parse, s, string, top)
 import Url.Parser.Query as Query
 
 
-port storeCredentials : E.Value -> Cmd msg
+port storePageData : E.Value -> Cmd msg
+
+
+port storeSession : E.Value -> Cmd msg
 
 
 type alias Model =
@@ -30,13 +34,11 @@ type alias Model =
 type Page
     = NotFound Session.Data
     | Login Login.Model
-    | LoggingIn Session.Data
     | Home Home.Model
 
 
 type alias Flags =
-    { micropubUrl : String
-    , credentials : E.Value
+    { session : E.Value
     }
 
 
@@ -48,16 +50,10 @@ micropubUrl =
 init : Flags -> Url.Url -> Nav.Key -> ( Model, Cmd Message )
 init flags url key =
     let
-        tokenResult =
-            D.decodeValue Auth.tokenDecoder flags.credentials
-
         session =
-            case tokenResult of
-                Ok token ->
-                    Session.login micropubUrl token Session.empty
-
-                Err _ ->
-                    Session.empty
+            Result.withDefault
+                Session.empty
+                (D.decodeValue Session.decoder flags.session)
     in
     stepUrl url
         { key = key
@@ -74,9 +70,6 @@ getSession model =
         Login login ->
             login.session
 
-        LoggingIn session ->
-            session
-
         Home home ->
             Session.LoggedIn home.session
 
@@ -89,14 +82,6 @@ view model =
             , body =
                 [ h1 [] [ text "Not Found" ]
                 , p [] [ text "Nothing found at this URL." ]
-                ]
-            }
-
-        LoggingIn _ ->
-            { title = "Logging In..."
-            , body =
-                [ h1 [] [ text "Logging In" ]
-                , p [] [ text "Authorizing you!" ]
                 ]
             }
 
@@ -118,7 +103,6 @@ type Message
     = NoOp
     | LinkClicked Browser.UrlRequest
     | UrlChanged Url.Url
-    | GotAuthToken (Result Http.Error Auth.AuthorizedToken)
     | LoginMsg Login.Message
     | HomeMsg Home.Message
 
@@ -138,12 +122,6 @@ update message model =
         UrlChanged url ->
             stepUrl url model
 
-        GotAuthToken (Ok token) ->
-            saveToken token model
-
-        GotAuthToken (Err _) ->
-            ( model, Cmd.none )
-
         LoginMsg msg ->
             case model.page of
                 Login login ->
@@ -159,16 +137,6 @@ update message model =
 
                 _ ->
                     ( model, Cmd.none )
-
-
-saveToken : Auth.AuthorizedToken -> Model -> ( Model, Cmd Message )
-saveToken token model =
-    ( { model | page = LoggingIn (Session.login micropubUrl token (getSession model)) }
-    , Cmd.batch
-        [ Nav.pushUrl model.key "/"
-        , storeCredentials (Auth.encodeToken token)
-        ]
-    )
 
 
 stepLogin : Model -> ( Login.Model, Cmd Login.Message ) -> ( Model, Cmd Message )
@@ -191,8 +159,7 @@ subscriptions model =
 
 
 type Route
-    = LoginRoute
-    | CallbackRoute (Maybe String) (Maybe String) (Maybe String)
+    = LoginRoute (Maybe Auth.Callback)
     | HomeRoute
 
 
@@ -200,9 +167,25 @@ routeParser : Parser (Route -> a) a
 routeParser =
     Url.Parser.oneOf
         [ map HomeRoute top
-        , map LoginRoute (s "login")
-        , map CallbackRoute (s "callback" <?> Query.string "code" <?> Query.string "me" <?> Query.string "state")
+        , map (LoginRoute Nothing) (s "login")
+        , map LoginRoute (s "callback" <?> callbackParamsParser)
         ]
+
+
+callbackParamsParser : Query.Parser (Maybe Auth.Callback)
+callbackParamsParser =
+    Query.map3
+        (\c m s ->
+            case ( c, m, s ) of
+                ( Just code, Just me, Just state ) ->
+                    Just (Auth.Callback code me state)
+
+                _ ->
+                    Nothing
+        )
+        (Query.string "code")
+        (Query.string "me")
+        (Query.string "state")
 
 
 stepUrl : Url.Url -> Model -> ( Model, Cmd Message )
@@ -212,21 +195,23 @@ stepUrl url model =
             getSession model
     in
     case parse routeParser url of
-        Just LoginRoute ->
-            stepLogin model (Login.init session)
-
-        Just (CallbackRoute (Just code) (Just me) (Just state)) ->
-            ( { model | page = LoggingIn session }
-            , Auth.authorizeToken GotAuthToken code me state
-            )
+        Just (LoginRoute callback) ->
+            Login.init
+                { session = session
+                , callback = callback
+                , storePageData = storePageData
+                , storeSession = storeSession
+                , key = model.key
+                }
+                |> stepLogin model
 
         Just HomeRoute ->
             case session of
-                Session.Guest ->
-                    ( { model | page = NotFound session }, Nav.pushUrl model.key "/login" )
-
                 Session.LoggedIn sess ->
                     stepHome model (Home.init sess)
+
+                _ ->
+                    ( { model | page = NotFound session }, Nav.pushUrl model.key "/login" )
 
         _ ->
             ( { model | page = NotFound session }, Cmd.none )

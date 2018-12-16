@@ -1,4 +1,4 @@
-module IndieAuth exposing (AuthorizedToken, authorizeToken, encodeToken, header, tokenDecoder)
+module IndieAuth exposing (AuthorizedToken, Callback, authorizeToken, encodeToken, header, tokenDecoder)
 
 import Http
 import Json.Decode as D
@@ -15,28 +15,35 @@ type alias AuthorizedToken =
     }
 
 
+type alias Callback =
+    { code : String
+    , me : String
+    , state : String
+    }
+
+
 header : AuthorizedToken -> Http.Header
 header token =
     Http.header "Authorization" ("Bearer " ++ token.accessToken)
 
 
-authorizeToken : (Result Http.Error AuthorizedToken -> msg) -> String -> String -> String -> Cmd msg
-authorizeToken msg code me state =
+authorizeToken : (Result Http.Error AuthorizedToken -> msg) -> String -> Callback -> Cmd msg
+authorizeToken msg url cb =
     Http.post
-        { url = "https://blog-api.mattmoriarity.com/token"
-        , body = Http.stringBody "application/x-www-form-urlencoded" (encodeAuthorizeBody code me)
+        { url = url
+        , body = Http.stringBody "application/x-www-form-urlencoded" (encodeAuthorizeBody cb)
         , expect = Http.expectJson msg tokenDecoder
         }
 
 
-encodeAuthorizeBody : String -> String -> String
-encodeAuthorizeBody code me =
+encodeAuthorizeBody : Callback -> String
+encodeAuthorizeBody cb =
     UB.toQuery
         [ UB.string "grant_type" "authorization_code"
-        , UB.string "code" code
+        , UB.string "code" cb.code
         , UB.string "client_id" "http://localhost:8000"
         , UB.string "redirect_uri" "http://localhost:8000/callback"
-        , UB.string "me" me
+        , UB.string "me" cb.me
         ]
         |> String.dropLeft 1
 

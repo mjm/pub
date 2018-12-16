@@ -1,17 +1,22 @@
 module Micropub exposing
     ( Config
     , Session
+    , configDecoder
+    , encodeConfig
+    , encodeSession
     , getConfig
     , getPost
     , login
     , postTypeName
     , postTypes
+    , sessionDecoder
     )
 
 import Http
 import IndieAuth as Auth
 import Json.Decode as D
 import Json.Decode.Pipeline exposing (optional, required)
+import Json.Encode as E
 import Microformats
 import Url.Builder as UB
 
@@ -69,15 +74,15 @@ postTypeName t =
             n
 
 
-decodeConfig : D.Decoder Config
-decodeConfig =
+configDecoder : D.Decoder Config
+configDecoder =
     D.succeed Config
         |> optional "media-endpoint" (D.maybe D.string) Nothing
-        |> optional "post-types" (D.maybe (D.list decodePostType)) Nothing
+        |> optional "post-types" (D.maybe (D.list postTypeDecoder)) Nothing
 
 
-decodePostType : D.Decoder PostType
-decodePostType =
+postTypeDecoder : D.Decoder PostType
+postTypeDecoder =
     D.succeed
         (\name type_ ->
             case type_ of
@@ -97,14 +102,63 @@ decodePostType =
         |> required "type" D.string
 
 
-getConfig : Session -> (Result Http.Error Config -> msg) -> Cmd msg
-getConfig session msg =
+encodeConfig : Config -> E.Value
+encodeConfig cfg =
+    E.object
+        [ ( "media-endpoint", Maybe.withDefault E.null (Maybe.map E.string cfg.mediaEndpoint) )
+        , ( "post-types", Maybe.withDefault E.null (Maybe.map encodePostTypes cfg.postTypes) )
+        ]
+
+
+encodePostTypes : List PostType -> E.Value
+encodePostTypes =
+    E.list
+        (\t ->
+            let
+                ( name, type_ ) =
+                    case t of
+                        Note n ->
+                            ( n, "note" )
+
+                        Article n ->
+                            ( n, "article" )
+
+                        Photo n ->
+                            ( n, "photo" )
+
+                        Unknown n x ->
+                            ( n, x )
+            in
+            E.object
+                [ ( "name", E.string name )
+                , ( "type", E.string type_ )
+                ]
+        )
+
+
+sessionDecoder : D.Decoder Session
+sessionDecoder =
+    D.succeed Session
+        |> required "url" D.string
+        |> required "token" Auth.tokenDecoder
+
+
+encodeSession : Session -> E.Value
+encodeSession sess =
+    E.object
+        [ ( "url", E.string sess.url )
+        , ( "token", Auth.encodeToken sess.token )
+        ]
+
+
+getConfig : (Result Http.Error Config -> msg) -> Session -> Cmd msg
+getConfig msg session =
     Http.request
         { method = "GET"
         , headers = [ Auth.header session.token ]
         , url = session.url ++ "?q=config"
         , body = Http.emptyBody
-        , expect = Http.expectJson msg decodeConfig
+        , expect = Http.expectJson msg configDecoder
         , timeout = Nothing
         , tracker = Nothing
         }
