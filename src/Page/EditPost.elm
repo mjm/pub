@@ -45,6 +45,7 @@ type Message
     | SetName String
     | SetContent String
     | SavePost
+    | SavedPost (Result Http.Error ())
     | RevertPost
 
 
@@ -67,6 +68,17 @@ update msg model =
             ( updatePost (Microformats.setString "content" content) model, Cmd.none )
 
         SavePost ->
+            case model.diff of
+                Just d ->
+                    ( model, MP.updatePost SavedPost d model.session.micropub )
+
+                Nothing ->
+                    ( model, Cmd.none )
+
+        SavedPost (Ok _) ->
+            ( { model | originalPost = model.post, diff = Nothing }, Cmd.none )
+
+        SavedPost (Err _) ->
             ( model, Cmd.none )
 
         RevertPost ->
@@ -108,7 +120,13 @@ editPost model item =
     in
     Html.form
         [ class "w-full h-screen flex flex-col"
-        , onSubmit SavePost
+        , onSubmit
+            (if hasChanges then
+                SavePost
+
+             else
+                NoOp
+            )
         ]
         [ div [ class "flex flex-initial flex-row items-baseline" ]
             [ div [ class "flex-grow" ]
@@ -122,6 +140,7 @@ editPost model item =
                             , a
                                 [ href url
                                 , class "text-orange-dark"
+                                , target "_blank"
                                 ]
                                 [ text url ]
                             ]
@@ -138,7 +157,13 @@ editPost model item =
                 [ text "Save" ]
             , button
                 [ type_ "button"
-                , onClick RevertPost
+                , onClick
+                    (if hasChanges then
+                        RevertPost
+
+                     else
+                        NoOp
+                    )
                 , class "font-bold px-3 py-2 mx-2 rounded"
                 , if hasChanges then
                     class "bg-grey-lighter text-grey-darker"

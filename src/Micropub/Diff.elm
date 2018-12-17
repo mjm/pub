@@ -2,6 +2,7 @@ module Micropub.Diff exposing
     ( Deletions(..)
     , Diff
     , diff
+    , encode
     , hasChanges
     )
 

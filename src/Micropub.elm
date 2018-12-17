@@ -10,6 +10,7 @@ module Micropub exposing
     , postTypeName
     , postTypes
     , sessionDecoder
+    , updatePost
     )
 
 import Http
@@ -18,6 +19,7 @@ import Json.Decode as D
 import Json.Decode.Pipeline exposing (optional, required)
 import Json.Encode as E
 import Microformats
+import Micropub.Diff as Diff
 import Url.Builder as UB
 
 
@@ -180,6 +182,19 @@ getPost msg url session =
         , url = reqUrl
         , body = Http.emptyBody
         , expect = Http.expectJson msg Microformats.itemDecoder
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+updatePost : (Result Http.Error () -> msg) -> Diff.Diff -> Session -> Cmd msg
+updatePost msg diff session =
+    Http.request
+        { method = "POST"
+        , headers = [ Auth.header session.token ]
+        , url = session.url
+        , body = Http.jsonBody (Diff.encode diff)
+        , expect = Http.expectWhatever msg
         , timeout = Nothing
         , tracker = Nothing
         }
