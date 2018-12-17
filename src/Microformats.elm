@@ -1,9 +1,11 @@
 module Microformats exposing
     ( Item
     , Parsed
+    , PropertyDict
     , PropertyValue(..)
     , decoder
     , encodeItem
+    , encodeProperties
     , feedEntries
     , getLink
     , itemDecoder
@@ -26,13 +28,17 @@ type alias Parsed =
 
 type alias Item =
     { type_ : String
-    , properties : Dict String (List PropertyValue)
+    , properties : PropertyDict
     , children : Children
     }
 
 
 type Children
     = Children (List Item)
+
+
+type alias PropertyDict =
+    Dict String (List PropertyValue)
 
 
 type PropertyValue
@@ -56,7 +62,7 @@ itemDecoder =
         |> optional "children" childrenDecoder (Children [])
 
 
-propertiesDecoder : D.Decoder (Dict String (List PropertyValue))
+propertiesDecoder : D.Decoder PropertyDict
 propertiesDecoder =
     D.dict (D.list propertyDecoder)
 
@@ -90,9 +96,14 @@ encodeItem item =
     in
     E.object
         [ ( "type", E.list E.string [ item.type_ ] )
-        , ( "properties", E.dict identity (E.list encodeProperty) item.properties )
+        , ( "properties", encodeProperties item.properties )
         , ( "children", E.list encodeItem children )
         ]
+
+
+encodeProperties : PropertyDict -> E.Value
+encodeProperties =
+    E.dict identity (E.list encodeProperty)
 
 
 encodeProperty : PropertyValue -> E.Value
