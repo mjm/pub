@@ -3,6 +3,7 @@ module Microformats exposing
     , Parsed
     , PropertyDict
     , PropertyValue(..)
+    , createEntry
     , decoder
     , encodeItem
     , encodeProperties
@@ -45,6 +46,14 @@ type PropertyValue
     = Str String
     | Embedded String String
     | Child Item
+
+
+createEntry : Item
+createEntry =
+    { type_ = "h-entry"
+    , properties = Dict.empty
+    , children = Children []
+    }
 
 
 decoder : D.Decoder Parsed

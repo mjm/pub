@@ -1,11 +1,14 @@
 module Micropub exposing
     ( Config
+    , PostType(..)
     , Session
     , configDecoder
+    , createPost
     , encodeConfig
     , encodeSession
     , getConfig
     , getPost
+    , getPostType
     , login
     , postTypeName
     , postTypes
@@ -13,6 +16,7 @@ module Micropub exposing
     , updatePost
     )
 
+import Dict
 import Http
 import IndieAuth as Auth
 import Json.Decode as D
@@ -74,6 +78,36 @@ postTypeName t =
 
         Unknown n _ ->
             n
+
+
+postTypeKey : PostType -> String
+postTypeKey t =
+    case t of
+        Note _ ->
+            "note"
+
+        Article _ ->
+            "article"
+
+        Photo _ ->
+            "photo"
+
+        Unknown _ type_ ->
+            type_
+
+
+getPostType : Maybe String -> Config -> Maybe PostType
+getPostType type_ cfg =
+    let
+        types =
+            postTypes cfg
+    in
+    case type_ of
+        Just n ->
+            List.head <| List.filter (\pt -> postTypeKey pt == n) types
+
+        Nothing ->
+            List.head types
 
 
 configDecoder : D.Decoder Config
@@ -187,6 +221,19 @@ getPost msg url session =
         }
 
 
+createPost : (Result Http.Error String -> msg) -> Microformats.Item -> Session -> Cmd msg
+createPost msg item session =
+    Http.request
+        { method = "POST"
+        , headers = [ Auth.header session.token ]
+        , url = session.url
+        , body = Http.jsonBody (Microformats.encodeItem item)
+        , expect = expectCreated msg
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
 updatePost : (Result Http.Error () -> msg) -> Diff.Diff -> Session -> Cmd msg
 updatePost msg diff session =
     Http.request
@@ -198,3 +245,34 @@ updatePost msg diff session =
         , timeout = Nothing
         , tracker = Nothing
         }
+
+
+expectCreated : (Result Http.Error String -> msg) -> Http.Expect msg
+expectCreated toMsg =
+    Http.expectStringResponse toMsg <|
+        \response ->
+            case response of
+                Http.BadUrl_ url ->
+                    Err (Http.BadUrl url)
+
+                Http.Timeout_ ->
+                    Err Http.Timeout
+
+                Http.NetworkError_ ->
+                    Err Http.NetworkError
+
+                Http.BadStatus_ metadata body ->
+                    Err (Http.BadStatus metadata.statusCode)
+
+                Http.GoodStatus_ metadata body ->
+                    case metadata.statusCode of
+                        201 ->
+                            case Dict.get "location" metadata.headers of
+                                Just url ->
+                                    Ok url
+
+                                Nothing ->
+                                    Err (Http.BadBody "No Location header found")
+
+                        _ ->
+                            Err (Http.BadStatus metadata.statusCode)

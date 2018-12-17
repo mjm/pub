@@ -13,6 +13,7 @@ import Micropub.Html as MPH
 import Page.EditPost as EditPost
 import Page.Home as Home
 import Page.Login as Login
+import Page.NewPost as NewPost
 import Session
 import Skeleton
 import Url
@@ -38,6 +39,7 @@ type Page
     | Login Login.Model
     | Home Home.Model
     | EditPost EditPost.Model
+    | NewPost NewPost.Model
 
 
 type alias Flags =
@@ -74,6 +76,9 @@ getSession model =
         EditPost edit ->
             Session.LoggedIn edit.session
 
+        NewPost new ->
+            Session.LoggedIn new.session
+
 
 view : Model -> Browser.Document Message
 view model =
@@ -95,6 +100,9 @@ view model =
         EditPost edit ->
             Skeleton.view EditPostMsg (EditPost.view edit)
 
+        NewPost new ->
+            Skeleton.view NewPostMsg (NewPost.view new)
+
 
 mapDocument : (a -> msg) -> Browser.Document a -> Browser.Document msg
 mapDocument f doc =
@@ -110,6 +118,7 @@ type Message
     | LoginMsg Login.Message
     | HomeMsg Home.Message
     | EditPostMsg EditPost.Message
+    | NewPostMsg NewPost.Message
 
 
 update : Message -> Model -> ( Model, Cmd Message )
@@ -151,25 +160,39 @@ update message model =
                 _ ->
                     ( model, Cmd.none )
 
+        NewPostMsg msg ->
+            case model.page of
+                NewPost new ->
+                    stepNewPost model (NewPost.update msg new)
+
+                _ ->
+                    ( model, Cmd.none )
+
 
 stepLogin : Model -> ( Login.Model, Cmd Login.Message ) -> ( Model, Cmd Message )
-stepLogin model ( login, cmds ) =
-    ( { model | page = Login login }
-    , Cmd.map LoginMsg cmds
-    )
+stepLogin =
+    stepPage Login LoginMsg
 
 
 stepHome : Model -> ( Home.Model, Cmd Home.Message ) -> ( Model, Cmd Message )
-stepHome model ( home, cmds ) =
-    ( { model | page = Home home }
-    , Cmd.map HomeMsg cmds
-    )
+stepHome =
+    stepPage Home HomeMsg
 
 
 stepEditPost : Model -> ( EditPost.Model, Cmd EditPost.Message ) -> ( Model, Cmd Message )
-stepEditPost model ( edit, cmds ) =
-    ( { model | page = EditPost edit }
-    , Cmd.map EditPostMsg cmds
+stepEditPost =
+    stepPage EditPost EditPostMsg
+
+
+stepNewPost : Model -> ( NewPost.Model, Cmd NewPost.Message ) -> ( Model, Cmd Message )
+stepNewPost =
+    stepPage NewPost NewPostMsg
+
+
+stepPage : (model -> Page) -> (msg -> Message) -> Model -> ( model, Cmd msg ) -> ( Model, Cmd Message )
+stepPage toPage toMsg model ( pageModel, cmds ) =
+    ( { model | page = toPage pageModel }
+    , Cmd.map toMsg cmds
     )
 
 
@@ -182,6 +205,7 @@ type Route
     = LoginRoute (Maybe Auth.Callback)
     | HomeRoute
     | EditPostRoute (Maybe String)
+    | NewPostRoute (Maybe String)
 
 
 routeParser : Parser (Route -> a) a
@@ -191,6 +215,7 @@ routeParser =
         , map (LoginRoute Nothing) (s "login")
         , map LoginRoute (s "callback" <?> callbackParamsParser)
         , map EditPostRoute (s "posts" </> s "edit" <?> Query.string "url")
+        , map NewPostRoute (s "posts" </> s "new" <?> Query.string "type")
         ]
 
 
@@ -237,13 +262,26 @@ stepUrl url model =
 
         Just HomeRoute ->
             requireLoggedIn
-                (\sess ->
-                    stepHome model (Home.init sess)
-                )
+                (\sess -> stepHome model (Home.init sess))
 
         Just (EditPostRoute (Just u)) ->
             requireLoggedIn
                 (\sess -> stepEditPost model (EditPost.init sess u))
+
+        Just (NewPostRoute typeKey) ->
+            requireLoggedIn
+                (\sess ->
+                    let
+                        postType =
+                            MP.getPostType typeKey sess.config
+                    in
+                    case postType of
+                        Just t ->
+                            stepNewPost model (NewPost.init model.key sess t)
+
+                        Nothing ->
+                            ( { model | page = NotFound session }, Cmd.none )
+                )
 
         _ ->
             ( { model | page = NotFound session }, Cmd.none )
