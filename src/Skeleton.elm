@@ -19,7 +19,7 @@ view : (a -> msg) -> Details a -> Browser.Document msg
 view toMsg details =
     { title = details.title
     , body =
-        [ div [ class "flex h-screen" ]
+        [ div [ class "font-sans flex h-screen" ]
             [ nav [ class "flex flex-col w-1/4 xl:w-1/5 min-h-screen bg-orange-lightest shadow-lg z-30 pt-2 overflow-y-auto" ]
                 [ navHeader "Posts"
                 , div [ class "flex-row" ]
@@ -38,8 +38,10 @@ view toMsg details =
 navHeader : String -> Html msg
 navHeader title =
     div [ class "flex-row" ]
-        [ h4 [ class "mt-2 mb-2 uppercase text-orange no-underline block px-3 text-xs font-bold" ]
-            [ text title ]
+        [ a [ href "/", class "no-underline text-orange" ]
+            [ h4 [ class "mt-2 mb-2 uppercase no-underline block px-3 text-xs font-bold" ]
+                [ text title ]
+            ]
         ]
 
 
