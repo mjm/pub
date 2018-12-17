@@ -147,9 +147,9 @@ editPost model item =
                 ]
             , button
                 [ type_ "submit"
-                , class "font-bold px-3 py-2 mx-2 rounded"
+                , class "px-3 py-2 mx-1 rounded"
                 , if hasChanges then
-                    class "bg-blue-dark text-white"
+                    class "font-bold bg-blue-dark text-white"
 
                   else
                     class "bg-grey-lightest text-grey"
@@ -164,7 +164,7 @@ editPost model item =
                      else
                         NoOp
                     )
-                , class "font-bold px-3 py-2 mx-2 rounded"
+                , class "font-medium px-3 py-2 mx-1 rounded"
                 , if hasChanges then
                     class "bg-grey-lighter text-grey-darker"
 

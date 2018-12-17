@@ -25,9 +25,9 @@ view toMsg details =
                 , div [ class "flex-row" ]
                     [ sidebarPosts details.session ]
                 , navHeader "Pages"
-                , p [ class "text-orange-darkest m-3 text-sm" ] [ text "No pages" ]
+                , div [ class "text-orange-darkest m-3 text-sm" ] [ text "No pages" ]
                 , navHeader "Templates"
-                , p [ class "text-orange-darkest m-3 text-sm" ] [ text "No templates" ]
+                , div [ class "text-orange-darkest m-3 text-sm" ] [ text "No templates" ]
                 ]
             , Html.map toMsg <| div [ class "flex flex-col w-3/4 xl:w-4/5 bg-white p-4" ] details.body
             ]
@@ -38,7 +38,7 @@ view toMsg details =
 navHeader : String -> Html msg
 navHeader title =
     div [ class "flex-row" ]
-        [ h4 [ class "mt-2 uppercase text-orange no-underline block px-3 text-xs font-bold" ]
+        [ h4 [ class "mt-2 mb-2 uppercase text-orange no-underline block px-3 text-xs font-bold" ]
             [ text title ]
         ]
 
@@ -58,14 +58,14 @@ sidebarPost item =
         url =
             Microformats.string "url" item
     in
-    li [ class "text-orange-darkest m-3" ]
+    li [ class "text-orange-darkest" ]
         [ case url of
             Nothing ->
-                p [] [ text name ]
+                p [ class "p-1" ] [ text name ]
 
             Just u ->
                 a
-                    [ class "block text-orange-darkest truncate"
+                    [ class "-mt-1 px-3 pb-2 pt-2 block no-underline text-orange-darkest truncate hover:bg-orange-lighter"
                     , href (editPostUrl u)
                     ]
                     [ text name ]
