@@ -25,8 +25,12 @@ create =
 
 view : String -> Config msg -> State -> Html msg
 view input config state =
+    let
+        opts =
+            Markdown.defaultOptions
+    in
     div (config.attrs ++ [ class "flex flex-col" ])
-        [ ul [ class "list-reset flex border-b" ]
+        [ ul [ class "list-reset flex flex-none border-b" ]
             [ tabItem config.onStateChange state Editing "Write"
             , tabItem config.onStateChange state Previewing "Preview"
             ]
@@ -41,7 +45,11 @@ view input config state =
 
             Previewing ->
                 div [ class "flex-grow leading-normal border-l border-r border-b p-3 overflow-y-auto" ]
-                    [ Markdown.toHtml [ class "preview-content" ] input ]
+                    [ Markdown.toHtmlWith
+                        { opts | sanitize = False }
+                        [ class "preview-content" ]
+                        input
+                    ]
         ]
 
 

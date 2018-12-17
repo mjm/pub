@@ -2,4 +2,13 @@
 
 @tailwind preflight;
 @tailwind components;
+
+.preview-content a {
+  @apply text-orange-dark;
+}
+
+.preview-content p, .preview-content pre, .preview-content ul {
+  @apply mb-3;
+}
+
 @tailwind utilities;

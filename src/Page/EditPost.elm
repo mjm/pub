@@ -135,7 +135,7 @@ editPost model item =
                 NoOp
             )
         ]
-        [ div [ class "flex flex-initial flex-row items-baseline" ]
+        [ div [ class "flex flex-none flex-row items-baseline" ]
             [ div [ class "flex-grow" ]
                 [ case Microformats.string "url" item of
                     Nothing ->
@@ -180,7 +180,7 @@ editPost model item =
                 ]
                 [ text "Revert" ]
             ]
-        , div [ class "flex-initial py-2 border-orange border-b" ]
+        , div [ class "flex-none py-2 border-orange border-b" ]
             [ input
                 [ class "px-2 text-xl appearance-none w-full bg-transparent border-none focus:outline-none"
                 , placeholder "Untitled"
