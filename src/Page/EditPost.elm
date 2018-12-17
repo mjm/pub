@@ -7,6 +7,7 @@ module Page.EditPost exposing
     )
 
 import Browser
+import Editor
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput, onSubmit)
@@ -25,6 +26,7 @@ type alias Model =
     , originalPost : Maybe Microformats.Item
     , post : Maybe Microformats.Item
     , diff : Maybe Diff.Diff
+    , editor : Editor.State
     }
 
 
@@ -34,6 +36,7 @@ init session url =
       , originalPost = Nothing
       , post = Nothing
       , diff = Nothing
+      , editor = Editor.create
       }
     , MP.getPost GotPost url session.micropub
     )
@@ -44,6 +47,7 @@ type Message
     | GotPost (Result Http.Error Microformats.Item)
     | SetName String
     | SetContent String
+    | SetEditorState Editor.State
     | SavePost
     | SavedPost (Result Http.Error ())
     | RevertPost
@@ -66,6 +70,9 @@ update msg model =
 
         SetContent content ->
             ( updatePost (Microformats.setString "content" content) model, Cmd.none )
+
+        SetEditorState editor ->
+            ( { model | editor = editor }, Cmd.none )
 
         SavePost ->
             case model.diff of
@@ -175,19 +182,20 @@ editPost model item =
             ]
         , div [ class "flex-initial py-2 border-orange border-b" ]
             [ input
-                [ class "text-xl appearance-none w-full bg-transparent border-none focus:outline-none"
+                [ class "px-2 text-xl appearance-none w-full bg-transparent border-none focus:outline-none"
                 , placeholder "Untitled"
                 , onInput SetName
                 , value (Maybe.withDefault "" (Microformats.string "name" item))
                 ]
                 []
             ]
-        , div [ class "flex flex-col flex-grow mt-2" ]
-            [ textarea
-                [ class "w-full flex-grow focus:outline-none leading-normal"
-                , onInput SetContent
-                , value (Maybe.withDefault "" (Microformats.string "content" item))
-                ]
-                []
+        , div [ class "flex flex-col flex-grow mt-3" ]
+            [ Editor.view
+                (Maybe.withDefault "" (Microformats.string "content" item))
+                { onInput = SetContent
+                , onStateChange = SetEditorState
+                , attrs = [ class "w-full flex-grow" ]
+                }
+                model.editor
             ]
         ]
