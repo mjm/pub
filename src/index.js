@@ -1,5 +1,6 @@
 require('./styles.css');
-const { Elm } = require('./Main');
+var main = require('./Main');
+var Elm = main.Elm;
 
 var session = localStorage.getItem('session');
 if (session) {
@@ -11,7 +12,7 @@ if (session) {
 var pageData = localStorage.getItem('pageData');
 if (pageData) { session.pageData = JSON.parse(pageData); }
 
-const rootUrl = window.location.protocol + "//" + window.location.host + "/";
+var rootUrl = window.location.protocol + "//" + window.location.host + "/";
 
 var app = Elm.Main.init({
   flags: {

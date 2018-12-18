@@ -2,6 +2,7 @@ const tailwindcss = require('tailwindcss');
 
 module.exports = {
   plugins: [
-    tailwindcss('./tailwind.js')
+    tailwindcss('./tailwind.js'),
+    require('cssnano')({ preset: 'default' })
   ]
 };

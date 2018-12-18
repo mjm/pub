@@ -1,6 +1,9 @@
 const path = require('path');
+
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+
 const devMode = process.env.NODE_ENV !== 'production';
 
 module.exports = {
@@ -33,7 +36,10 @@ module.exports = {
         exclude: [/elm-stuff/, /node_modules/],
         use: {
           loader: 'elm-webpack-loader',
-          options: { debug: process.env.NODE_ENV === 'development' }
+          options: {
+            debug: devMode,
+            optimize: !devMode,
+          }
         }
       }
     ],
@@ -48,6 +54,24 @@ module.exports = {
       template: 'src/index.html',
     }),
   ],
+  optimization: {
+    minimizer: [new UglifyJsPlugin({
+      uglifyOptions: {
+        compress: {
+          pure_funcs: ['F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'A9'],
+          pure_getters: true,
+          keep_fargs: false,
+          unsafe_comps: true,
+          unsafe: true
+        },
+        mangle: false
+      }
+    }), new UglifyJsPlugin({
+      uglifyOptions: {
+        mangle: true
+      }
+    })]
+  },
 
   devServer: {
     contentBase: path.join(__dirname, 'dist'),

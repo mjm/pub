@@ -209,26 +209,26 @@ module.exports = {
       'Helvetica Neue',
       'sans-serif',
     ],
-    'serif': [
-      'Constantia',
-      'Lucida Bright',
-      'Lucidabright',
-      'Lucida Serif',
-      'Lucida',
-      'DejaVu Serif',
-      'Bitstream Vera Serif',
-      'Liberation Serif',
-      'Georgia',
-      'serif',
-    ],
-    'mono': [
-      'Menlo',
-      'Monaco',
-      'Consolas',
-      'Liberation Mono',
-      'Courier New',
-      'monospace',
-    ],
+//    'serif': [
+//      'Constantia',
+//      'Lucida Bright',
+//      'Lucidabright',
+//      'Lucida Serif',
+//      'Lucida',
+//      'DejaVu Serif',
+//      'Bitstream Vera Serif',
+//      'Liberation Serif',
+//      'Georgia',
+//      'serif',
+//    ],
+//    'mono': [
+//      'Menlo',
+//      'Monaco',
+//      'Consolas',
+//      'Liberation Mono',
+//      'Courier New',
+//      'monospace',
+//    ],
   },
 
 
@@ -281,15 +281,15 @@ module.exports = {
   */
 
   fontWeights: {
-    'hairline': 100,
-    'thin': 200,
+    //'hairline': 100,
+    //'thin': 200,
     'light': 300,
     'normal': 400,
-    'medium': 500,
+    //'medium': 500,
     'semibold': 600,
     'bold': 700,
-    'extrabold': 800,
-    'black': 900,
+    //'extrabold': 800,
+    //'black': 900,
   },
 
 
@@ -739,15 +739,15 @@ module.exports = {
     '2': '0.5rem',
     '3': '0.75rem',
     '4': '1rem',
-    '5': '1.25rem',
-    '6': '1.5rem',
-    '8': '2rem',
-    '10': '2.5rem',
-    '12': '3rem',
-    '16': '4rem',
-    '20': '5rem',
-    '24': '6rem',
-    '32': '8rem',
+//    '5': '1.25rem',
+//    '6': '1.5rem',
+//    '8': '2rem',
+//    '10': '2.5rem',
+//    '12': '3rem',
+//    '16': '4rem',
+//    '20': '5rem',
+//    '24': '6rem',
+//    '32': '8rem',
   },
 
 
@@ -955,10 +955,10 @@ module.exports = {
   */
 
   plugins: [
-    require('tailwindcss/plugins/container')({
-      // center: true,
-      // padding: '1rem',
-    }),
+//    require('tailwindcss/plugins/container')({
+//      // center: true,
+//      // padding: '1rem',
+//    }),
   ],
 
 

@@ -203,7 +203,7 @@ view model =
 loggingInView : Model -> List (Html Message)
 loggingInView model =
     [ header []
-        [ h1 [ class "text-orange-darkest font-thin text-center" ]
+        [ h1 [ class "text-orange-darkest font-light text-center" ]
             [ text "Logging in..." ]
         ]
     ]
@@ -212,7 +212,7 @@ loggingInView model =
 loginFormView : Model -> List (Html Message)
 loginFormView model =
     [ header []
-        [ h1 [ class "text-orange-darkest font-thin text-center" ] [ text "Log in to your blog" ] ]
+        [ h1 [ class "text-orange-darkest font-light text-center" ] [ text "Log in to your blog" ] ]
     , p [ class "text-center text-grey-darker text-sm my-4" ]
         [ text "Enter your domain to log in using IndieAuth." ]
     , Html.form [ onSubmit Login ]
