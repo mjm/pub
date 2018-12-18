@@ -5,6 +5,7 @@ module Session exposing
     , empty
     , encode
     , login
+    , updatePageData
     )
 
 import IndieAuth as Auth
@@ -48,6 +49,19 @@ login mp cfg sess =
 
         LoggedIn data ->
             LoggedIn { data | micropub = mp, config = cfg }
+
+
+updatePageData : MPH.Data -> Data -> Data
+updatePageData pageData sess =
+    case sess of
+        Guest ->
+            Guest
+
+        LoggingIn _ ->
+            LoggingIn pageData
+
+        LoggedIn data ->
+            LoggedIn { data | pageData = pageData }
 
 
 decoder : D.Decoder Data

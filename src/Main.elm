@@ -54,11 +54,24 @@ init flags url key =
             Result.withDefault
                 Session.empty
                 (D.decodeValue Session.decoder flags.session)
+
+        ( model, cmds ) =
+            stepUrl url
+                { key = key
+                , page = NotFound session
+                }
     in
-    stepUrl url
-        { key = key
-        , page = NotFound session
-        }
+    ( model
+    , case session of
+        Session.LoggedIn data ->
+            Cmd.batch
+                [ MPH.load GotPageData data.micropub.token.me
+                , cmds
+                ]
+
+        _ ->
+            cmds
+    )
 
 
 getSession : Model -> Session.Data
@@ -78,6 +91,47 @@ getSession model =
 
         NewPost new ->
             Session.LoggedIn new.session
+
+
+updateSession : (Session.Data -> Session.Data) -> Model -> Model
+updateSession f model =
+    let
+        newSession =
+            f (getSession model)
+
+        newPage =
+            case model.page of
+                NotFound _ ->
+                    NotFound newSession
+
+                Login login ->
+                    Login { login | session = newSession }
+
+                Home home ->
+                    case newSession of
+                        Session.LoggedIn data ->
+                            Home { home | session = data }
+
+                        _ ->
+                            Home home
+
+                EditPost edit ->
+                    case newSession of
+                        Session.LoggedIn data ->
+                            EditPost { edit | session = data }
+
+                        _ ->
+                            EditPost edit
+
+                NewPost new ->
+                    case newSession of
+                        Session.LoggedIn data ->
+                            NewPost { new | session = data }
+
+                        _ ->
+                            NewPost new
+    in
+    { model | page = newPage }
 
 
 view : Model -> Browser.Document Message
@@ -115,6 +169,7 @@ type Message
     = NoOp
     | LinkClicked Browser.UrlRequest
     | UrlChanged Url.Url
+    | GotPageData (Result Http.Error MPH.Data)
     | LoginMsg Login.Message
     | HomeMsg Home.Message
     | EditPostMsg EditPost.Message
@@ -135,6 +190,12 @@ update message model =
 
         UrlChanged url ->
             stepUrl url model
+
+        GotPageData (Ok pd) ->
+            updatePageData pd model
+
+        GotPageData (Err _) ->
+            ( model, Cmd.none )
 
         LoginMsg msg ->
             case model.page of
@@ -167,6 +228,13 @@ update message model =
 
                 _ ->
                     ( model, Cmd.none )
+
+
+updatePageData : MPH.Data -> Model -> ( Model, Cmd Message )
+updatePageData pd model =
+    ( updateSession (Session.updatePageData pd) model
+    , storePageData (MPH.encodeLocal pd)
+    )
 
 
 stepLogin : Model -> ( Login.Model, Cmd Login.Message ) -> ( Model, Cmd Message )
