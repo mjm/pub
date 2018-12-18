@@ -1,12 +1,15 @@
 const path = require('path');
-const ExtractTextPlugin = require('extract-text-webpack-plugin')
-const HtmlWebpackPlugin = require('html-webpack-plugin')
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const devMode = process.env.NODE_ENV !== 'production';
 
 module.exports = {
   entry: ['./src/index.js'],
   mode: process.env.NODE_ENV,
   output: {
-    publicPath: '/'
+    publicPath: '/',
+    filename: '[name].[contenthash].js',
+    path: path.resolve(__dirname, 'dist')
   },
   resolve: {
     modules: [
@@ -19,13 +22,11 @@ module.exports = {
     rules: [
       {
         test: /\.css$/,
-        use: ExtractTextPlugin.extract({
-          fallback: 'style-loader',
-          use: [
-            { loader: 'css-loader', options: { importLoaders: 1 } },
-            'postcss-loader',
-          ],
-        }),
+        use: [
+          devMode ? 'style-loader' : MiniCssExtractPlugin.loader,
+          { loader: 'css-loader', options: { importLoaders: 1 } },
+          'postcss-loader',
+        ]
       },
       {
         test: /\.elm$/,
@@ -38,8 +39,9 @@ module.exports = {
     ],
   },
   plugins: [
-    new ExtractTextPlugin('styles.css', {
-      disable: process.env.NODE_ENV === 'development',
+    new MiniCssExtractPlugin({
+      filename: '[name].[contenthash].css',
+      chunkFilename: '[id].[contenthash].css'
     }),
     new HtmlWebpackPlugin({
       filename: 'index.html',
