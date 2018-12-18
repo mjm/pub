@@ -6,7 +6,7 @@ cache: npm
 
 script:
   # Build the production version of the app
-  - ./node_modules/.bin/webpack
+  - npm run build
 
 deploy:
   provider: s3
