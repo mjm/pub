@@ -3,6 +3,8 @@ module Blog.Page exposing
     , all
     , decoder
     , encode
+    , get
+    , shortPath
     )
 
 import Http
@@ -37,6 +39,11 @@ encode page =
         ]
 
 
+shortPath : Page -> String
+shortPath page =
+    String.replace "pages/" "" page.path
+
+
 pagesUrl : MP.Session -> String
 pagesUrl session =
     String.replace "/micropub" "/pages" session.url
@@ -50,6 +57,19 @@ all toMsg session =
         , url = pagesUrl session
         , body = Http.emptyBody
         , expect = Http.expectJson toMsg (D.list decoder)
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+get : (Result Http.Error Page -> msg) -> String -> MP.Session -> Cmd msg
+get toMsg path session =
+    Http.request
+        { method = "GET"
+        , headers = [ Auth.header session.token ]
+        , url = pagesUrl session ++ "/" ++ path
+        , body = Http.emptyBody
+        , expect = Http.expectJson toMsg decoder
         , timeout = Nothing
         , tracker = Nothing
         }

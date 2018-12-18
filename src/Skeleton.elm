@@ -91,7 +91,7 @@ sidebarPage page =
     li [ class "text-orange-darkest" ]
         [ a
             [ class "-mt-1 px-3 pb-2 pt-2 block no-underline text-orange-darkest truncate hover:bg-orange-lighter"
-            , href (Urls.editPage page.path)
+            , href (Urls.editPage (Page.shortPath page))
             ]
             [ text page.name ]
         ]

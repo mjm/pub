@@ -11,6 +11,7 @@ import Json.Decode as D
 import Json.Encode as E
 import Micropub as MP
 import Micropub.Html as MPH
+import Page.EditPage as EditPage
 import Page.EditPost as EditPost
 import Page.Home as Home
 import Page.Login as Login
@@ -41,6 +42,7 @@ type Page
     | Home Home.Model
     | EditPost EditPost.Model
     | NewPost NewPost.Model
+    | EditPage EditPage.Model
 
 
 type alias Flags =
@@ -98,6 +100,9 @@ getSession model =
         NewPost new ->
             Session.LoggedIn new.session
 
+        EditPage edit ->
+            Session.LoggedIn edit.session
+
 
 updateSession : (Session.Data -> Session.Data) -> Model -> Model
 updateSession f model =
@@ -119,7 +124,7 @@ updateSession f model =
                             Home { home | session = data }
 
                         _ ->
-                            Home home
+                            model.page
 
                 EditPost edit ->
                     case newSession of
@@ -127,7 +132,7 @@ updateSession f model =
                             EditPost { edit | session = data }
 
                         _ ->
-                            EditPost edit
+                            model.page
 
                 NewPost new ->
                     case newSession of
@@ -135,7 +140,15 @@ updateSession f model =
                             NewPost { new | session = data }
 
                         _ ->
-                            NewPost new
+                            model.page
+
+                EditPage edit ->
+                    case newSession of
+                        Session.LoggedIn data ->
+                            EditPage { edit | session = data }
+
+                        _ ->
+                            model.page
     in
     { model | page = newPage }
 
@@ -163,6 +176,9 @@ view model =
         NewPost new ->
             Skeleton.view NewPostMsg (NewPost.view new)
 
+        EditPage edit ->
+            Skeleton.view EditPageMsg (EditPage.view edit)
+
 
 mapDocument : (a -> msg) -> Browser.Document a -> Browser.Document msg
 mapDocument f doc =
@@ -181,6 +197,7 @@ type Message
     | HomeMsg Home.Message
     | EditPostMsg EditPost.Message
     | NewPostMsg NewPost.Message
+    | EditPageMsg EditPage.Message
 
 
 update : Message -> Model -> ( Model, Cmd Message )
@@ -242,6 +259,14 @@ update message model =
                 _ ->
                     ( model, Cmd.none )
 
+        EditPageMsg msg ->
+            case model.page of
+                EditPage edit ->
+                    stepEditPage model (EditPage.update msg edit)
+
+                _ ->
+                    ( model, Cmd.none )
+
 
 updatePageData : MPH.Data -> Model -> ( Model, Cmd Message )
 updatePageData pd model =
@@ -281,6 +306,10 @@ stepNewPost =
     stepPage NewPost NewPostMsg
 
 
+stepEditPage =
+    stepPage EditPage EditPageMsg
+
+
 stepPage : (model -> Page) -> (msg -> Message) -> Model -> ( model, Cmd msg ) -> ( Model, Cmd Message )
 stepPage toPage toMsg model ( pageModel, cmds ) =
     ( { model | page = toPage pageModel }
@@ -298,6 +327,7 @@ type Route
     | HomeRoute
     | EditPostRoute (Maybe String)
     | NewPostRoute (Maybe String)
+    | EditPageRoute (Maybe String)
 
 
 routeParser : Parser (Route -> a) a
@@ -308,6 +338,7 @@ routeParser =
         , map LoginRoute (s "callback" <?> callbackParamsParser)
         , map EditPostRoute (s "posts" </> s "edit" <?> Query.string "url")
         , map NewPostRoute (s "posts" </> s "new" <?> Query.string "type")
+        , map EditPageRoute (s "pages" </> s "edit" <?> Query.string "path")
         ]
 
 
@@ -374,6 +405,10 @@ stepUrl url model =
                         Nothing ->
                             ( { model | page = NotFound session }, Cmd.none )
                 )
+
+        Just (EditPageRoute (Just path)) ->
+            requireLoggedIn
+                (\sess -> stepEditPage model (EditPage.init sess path))
 
         _ ->
             ( { model | page = NotFound session }, Cmd.none )
