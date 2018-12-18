@@ -135,20 +135,7 @@ editPost model =
         ]
         [ div [ class "flex flex-none flex-row items-baseline" ]
             [ div [ class "flex-grow" ]
-                [ case Microformats.string "url" model.post of
-                    Nothing ->
-                        text ""
-
-                    Just url ->
-                        span []
-                            [ strong [ class "text-orange-darkest" ] [ text "Permalink: " ]
-                            , a
-                                [ href url
-                                , class "text-orange-dark"
-                                , target "_blank"
-                                ]
-                                [ text url ]
-                            ]
+                [ h3 [] [ text ("New " ++ MP.postTypeName model.postType) ]
                 ]
             , button
                 [ type_ "submit"
