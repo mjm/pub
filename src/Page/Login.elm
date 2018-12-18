@@ -22,6 +22,7 @@ import Url.Builder as UB
 
 type alias Model =
     { key : Nav.Key
+    , rootUrl : String
     , session : Session.Data
     , callback : Maybe Auth.Callback
     , storePageData : E.Value -> Cmd Message
@@ -38,6 +39,7 @@ type alias Flags =
     , storePageData : E.Value -> Cmd Message
     , storeSession : E.Value -> Cmd Message
     , key : Nav.Key
+    , rootUrl : String
     }
 
 
@@ -53,6 +55,7 @@ init flags =
                     True
     in
     ( { key = flags.key
+      , rootUrl = flags.rootUrl
       , session = flags.session
       , callback = flags.callback
       , storePageData = flags.storePageData
@@ -61,17 +64,17 @@ init flags =
       , loggingIn = loggingIn
       , micropub = Nothing
       }
-    , initCommand flags.callback flags.session
+    , initCommand flags.rootUrl flags.callback flags.session
     )
 
 
-initCommand : Maybe Auth.Callback -> Session.Data -> Cmd Message
-initCommand callback session =
+initCommand : String -> Maybe Auth.Callback -> Session.Data -> Cmd Message
+initCommand client callback session =
     case session of
         Session.LoggingIn pd ->
             case ( pd.tokenEndpoint, callback ) of
                 ( Just url, Just cb ) ->
-                    Auth.authorizeToken GotAuthToken url cb
+                    Auth.authorizeToken GotAuthToken url client cb
 
                 _ ->
                     Cmd.none
@@ -99,7 +102,7 @@ update msg model =
             ( { model | siteUrl = url }, Cmd.none )
 
         Login ->
-            ( model, MPH.load GotPageData model.siteUrl )
+            ( { model | loggingIn = True }, MPH.load GotPageData model.siteUrl )
 
         GotPageData (Ok pd) ->
             ( { model | session = Session.LoggingIn pd }
@@ -109,7 +112,7 @@ update msg model =
 
                 Just endpoint ->
                     Cmd.batch
-                        [ loadAuthPage endpoint model.siteUrl
+                        [ loadAuthPage model.rootUrl endpoint model.siteUrl
                         , model.storePageData (MPH.encodeLocal pd)
                         ]
             )
@@ -139,15 +142,15 @@ update msg model =
             ( model, Cmd.none )
 
 
-loadAuthPage : String -> String -> Cmd msg
-loadAuthPage endpoint url =
+loadAuthPage : String -> String -> String -> Cmd msg
+loadAuthPage client endpoint url =
     let
         authUrl =
             endpoint
                 ++ UB.toQuery
                     [ UB.string "me" url
-                    , UB.string "client_id" "http://localhost:8000"
-                    , UB.string "redirect_uri" "http://localhost:8000/callback"
+                    , UB.string "client_id" client
+                    , UB.string "redirect_uri" (client ++ "callback")
                     , UB.string "state" "foo"
                     , UB.string "response_type" "code"
                     , UB.string "scope" "create update delete"

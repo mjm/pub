@@ -27,22 +27,22 @@ header token =
     Http.header "Authorization" ("Bearer " ++ token.accessToken)
 
 
-authorizeToken : (Result Http.Error AuthorizedToken -> msg) -> String -> Callback -> Cmd msg
-authorizeToken msg url cb =
+authorizeToken : (Result Http.Error AuthorizedToken -> msg) -> String -> String -> Callback -> Cmd msg
+authorizeToken msg url client cb =
     Http.post
         { url = url
-        , body = Http.stringBody "application/x-www-form-urlencoded" (encodeAuthorizeBody cb)
+        , body = Http.stringBody "application/x-www-form-urlencoded" (encodeAuthorizeBody client cb)
         , expect = Http.expectJson msg tokenDecoder
         }
 
 
-encodeAuthorizeBody : Callback -> String
-encodeAuthorizeBody cb =
+encodeAuthorizeBody : String -> Callback -> String
+encodeAuthorizeBody client cb =
     UB.toQuery
         [ UB.string "grant_type" "authorization_code"
         , UB.string "code" cb.code
-        , UB.string "client_id" "http://localhost:8000"
-        , UB.string "redirect_uri" "http://localhost:8000/callback"
+        , UB.string "client_id" client
+        , UB.string "redirect_uri" (client ++ "callback")
         , UB.string "me" cb.me
         ]
         |> String.dropLeft 1

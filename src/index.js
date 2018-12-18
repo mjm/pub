@@ -11,8 +11,13 @@ if (session) {
 var pageData = localStorage.getItem('pageData');
 if (pageData) { session.pageData = JSON.parse(pageData); }
 
+const rootUrl = window.location.protocol + "//" + window.location.host + "/";
+
 var app = Elm.Main.init({
-  flags: { session: session }
+  flags: {
+    rootUrl: rootUrl,
+    session: session
+  }
 });
 
 app.ports.storePageData.subscribe(function(data) {

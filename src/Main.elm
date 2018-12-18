@@ -32,6 +32,7 @@ port storeSession : E.Value -> Cmd msg
 
 type alias Model =
     { key : Nav.Key
+    , rootUrl : String
     , page : Page
     }
 
@@ -46,7 +47,8 @@ type Page
 
 
 type alias Flags =
-    { session : E.Value
+    { rootUrl : String
+    , session : E.Value
     }
 
 
@@ -61,6 +63,7 @@ init flags url key =
         ( model, cmds ) =
             stepUrl url
                 { key = key
+                , rootUrl = flags.rootUrl
                 , page = NotFound session
                 }
     in
@@ -380,6 +383,7 @@ stepUrl url model =
                 , storePageData = storePageData
                 , storeSession = storeSession
                 , key = model.key
+                , rootUrl = model.rootUrl
                 }
                 |> stepLogin model
 
