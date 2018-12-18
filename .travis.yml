@@ -1,0 +1,14 @@
+language: elm
+elm:
+  - 0.19.0
+
+script:
+  # Build the production version of the app
+  - ./node_modules/.bin/webpack
+
+deploy:
+  provider: s3
+  bucket: pub.mattmoriarity.com
+  skip_cleanup: true
+  acl: public_read
+  local_dir: dist
