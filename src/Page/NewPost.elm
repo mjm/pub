@@ -19,7 +19,7 @@ import Micropub as MP
 import Micropub.Html as MPH
 import Session
 import Skeleton
-import Url.Builder as UB
+import Urls
 
 
 type alias Model =
@@ -71,7 +71,7 @@ update msg model =
             ( model, MP.createPost SavedPost model.post model.session.micropub )
 
         SavedPost (Ok url) ->
-            ( model, Nav.pushUrl model.key (editPostUrl url) )
+            ( model, Nav.pushUrl model.key (Urls.editPost url) )
 
         SavedPost (Err _) ->
             ( model, Cmd.none )
@@ -82,9 +82,25 @@ updatePost f model =
     { model | post = f model.post }
 
 
-editPostUrl : String -> String
-editPostUrl url =
-    "/posts/edit" ++ UB.toQuery [ UB.string "url" url ]
+type Field
+    = Name
+    | Content
+
+
+supportedFields : MP.PostType -> List Field
+supportedFields t =
+    case t of
+        MP.Note _ ->
+            [ Content ]
+
+        MP.Article _ ->
+            [ Name, Content ]
+
+        MP.Photo _ ->
+            [ Name, Content ]
+
+        MP.Unknown _ _ ->
+            []
 
 
 view : Model -> Skeleton.Details Message
@@ -100,6 +116,12 @@ editPost model =
     let
         isValid =
             True
+
+        fields =
+            supportedFields model.postType
+
+        displayField f =
+            List.member f fields
     in
     Html.form
         [ class "w-full h-screen flex flex-col"
@@ -139,22 +161,30 @@ editPost model =
                 ]
                 [ text "Save" ]
             ]
-        , div [ class "flex-none py-2 border-orange border-b" ]
-            [ input
-                [ class "px-2 text-xl appearance-none w-full bg-transparent border-none focus:outline-none"
-                , placeholder "Untitled"
-                , onInput SetName
-                , value (Maybe.withDefault "" (Microformats.string "name" model.post))
+        , if displayField Name then
+            div [ class "flex-none py-2 border-orange border-b" ]
+                [ input
+                    [ class "px-2 text-xl appearance-none w-full bg-transparent border-none focus:outline-none"
+                    , placeholder "Untitled"
+                    , onInput SetName
+                    , value (Maybe.withDefault "" (Microformats.string "name" model.post))
+                    ]
+                    []
                 ]
-                []
-            ]
-        , div [ class "flex flex-col flex-grow mt-3" ]
-            [ Editor.view
-                (Maybe.withDefault "" (Microformats.string "content" model.post))
-                { onInput = SetContent
-                , onStateChange = SetEditorState
-                , attrs = [ class "w-full flex-grow" ]
-                }
-                model.editor
-            ]
+
+          else
+            text ""
+        , if displayField Content then
+            div [ class "flex flex-col flex-grow mt-3" ]
+                [ Editor.view
+                    (Maybe.withDefault "" (Microformats.string "content" model.post))
+                    { onInput = SetContent
+                    , onStateChange = SetEditorState
+                    , attrs = [ class "w-full flex-grow" ]
+                    }
+                    model.editor
+                ]
+
+          else
+            text ""
         ]

@@ -17,7 +17,7 @@ import Micropub as MP
 import Micropub.Html as MPH
 import Session
 import Skeleton
-import Url.Builder as UB
+import Urls
 
 
 type alias Model =
@@ -52,7 +52,10 @@ view model =
             (List.map
                 (\t ->
                     li []
-                        [ button [ class "text-sm font-bold bg-blue-dark text-white px-3 py-2 mx-2 rounded" ]
+                        [ a
+                            [ class "text-sm font-bold bg-blue-dark text-white px-3 py-2 mx-2 rounded no-underline"
+                            , href (Urls.newPost t)
+                            ]
                             [ text (MP.postTypeName t) ]
                         ]
                 )

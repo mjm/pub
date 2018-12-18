@@ -10,6 +10,7 @@ module Micropub exposing
     , getPost
     , getPostType
     , login
+    , postTypeKey
     , postTypeName
     , postTypes
     , sessionDecoder

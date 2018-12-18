@@ -6,6 +6,7 @@ import Html.Attributes exposing (..)
 import Microformats
 import Session
 import Url.Builder as UB
+import Urls
 
 
 type alias Details msg =
@@ -38,7 +39,10 @@ view toMsg details =
 navHeader : String -> Html msg
 navHeader title =
     div [ class "flex-row" ]
-        [ a [ href "/", class "no-underline text-orange" ]
+        [ a
+            [ href Urls.home
+            , class "no-underline text-orange"
+            ]
             [ h4 [ class "mt-2 mb-2 uppercase no-underline block px-3 text-xs font-bold" ]
                 [ text title ]
             ]
@@ -68,12 +72,7 @@ sidebarPost item =
             Just u ->
                 a
                     [ class "-mt-1 px-3 pb-2 pt-2 block no-underline text-orange-darkest truncate hover:bg-orange-lighter"
-                    , href (editPostUrl u)
+                    , href (Urls.editPost u)
                     ]
                     [ text name ]
         ]
-
-
-editPostUrl : String -> String
-editPostUrl postUrl =
-    "/posts/edit" ++ UB.toQuery [ UB.string "url" postUrl ]
