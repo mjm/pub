@@ -1,5 +1,6 @@
 module Skeleton exposing (Details, view)
 
+import Blog.Page as Page
 import Browser
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -26,7 +27,8 @@ view toMsg details =
                 , div [ class "flex-row" ]
                     [ sidebarPosts details.session ]
                 , navHeader "Pages"
-                , div [ class "text-orange-darkest m-3 text-sm" ] [ text "No pages" ]
+                , div [ class "flex-row" ]
+                    [ sidebarPages details.session ]
                 , navHeader "Templates"
                 , div [ class "text-orange-darkest m-3 text-sm" ] [ text "No templates" ]
                 ]
@@ -75,4 +77,21 @@ sidebarPost item =
                     , href (Urls.editPost u)
                     ]
                     [ text name ]
+        ]
+
+
+sidebarPages : Session.LoggedInData -> Html msg
+sidebarPages session =
+    ul [ class "list-reset text-sm" ] <|
+        List.map sidebarPage session.pages
+
+
+sidebarPage : Page.Page -> Html msg
+sidebarPage page =
+    li [ class "text-orange-darkest" ]
+        [ a
+            [ class "-mt-1 px-3 pb-2 pt-2 block no-underline text-orange-darkest truncate hover:bg-orange-lighter"
+            , href (Urls.editPage page.path)
+            ]
+            [ text page.name ]
         ]

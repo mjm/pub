@@ -1,5 +1,6 @@
 module Urls exposing
-    ( editPost
+    ( editPage
+    , editPost
     , home
     , newPost
     )
@@ -21,3 +22,8 @@ editPost url =
 newPost : Micropub.PostType -> String
 newPost pt =
     "/posts/new" ++ UB.toQuery [ UB.string "type" (Micropub.postTypeKey pt) ]
+
+
+editPage : String -> String
+editPage path =
+    "/pages/edit" ++ UB.toQuery [ UB.string "path" path ]

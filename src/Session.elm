@@ -6,10 +6,13 @@ module Session exposing
     , encode
     , login
     , updatePageData
+    , updatePages
     )
 
+import Blog.Page as Page
 import IndieAuth as Auth
 import Json.Decode as D
+import Json.Decode.Pipeline exposing (optional, required)
 import Json.Encode as E
 import Microformats
 import Micropub
@@ -26,6 +29,7 @@ type alias LoggedInData =
     { micropub : Micropub.Session
     , config : Micropub.Config
     , pageData : MPH.Data
+    , pages : List Page.Page
     }
 
 
@@ -45,6 +49,7 @@ login mp cfg sess =
                 { micropub = mp
                 , config = cfg
                 , pageData = pd
+                , pages = []
                 }
 
         LoggedIn data ->
@@ -64,17 +69,33 @@ updatePageData pageData sess =
             LoggedIn { data | pageData = pageData }
 
 
+updatePages : List Page.Page -> Data -> Data
+updatePages pages sess =
+    case sess of
+        LoggedIn data ->
+            LoggedIn { data | pages = pages }
+
+        _ ->
+            sess
+
+
 decoder : D.Decoder Data
 decoder =
     D.oneOf
-        [ D.map3 (\x y z -> LoggedIn (LoggedInData x y z))
-            (D.field "micropub" Micropub.sessionDecoder)
-            (D.field "config" Micropub.configDecoder)
-            (D.field "pageData" MPH.localDecoder)
+        [ D.map LoggedIn loggedInDecoder
         , D.map LoggingIn
             (D.field "pageData" MPH.localDecoder)
         , D.succeed Guest
         ]
+
+
+loggedInDecoder : D.Decoder LoggedInData
+loggedInDecoder =
+    D.succeed LoggedInData
+        |> required "micropub" Micropub.sessionDecoder
+        |> required "config" Micropub.configDecoder
+        |> required "pageData" MPH.localDecoder
+        |> optional "pages" (D.list Page.decoder) []
 
 
 encode : Data -> E.Value

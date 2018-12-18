@@ -1,5 +1,6 @@
 port module Main exposing (main)
 
+import Blog.Page as Page
 import Browser
 import Browser.Navigation as Nav
 import Html exposing (..)
@@ -64,14 +65,19 @@ init flags url key =
     ( model
     , case session of
         Session.LoggedIn data ->
-            Cmd.batch
-                [ MPH.load GotPageData data.micropub.token.me
-                , cmds
-                ]
+            Cmd.batch [ reloadEverything data, cmds ]
 
         _ ->
             cmds
     )
+
+
+reloadEverything : Session.LoggedInData -> Cmd Message
+reloadEverything data =
+    Cmd.batch
+        [ MPH.load GotPageData data.micropub.token.me
+        , Page.all GotPages data.micropub
+        ]
 
 
 getSession : Model -> Session.Data
@@ -170,6 +176,7 @@ type Message
     | LinkClicked Browser.UrlRequest
     | UrlChanged Url.Url
     | GotPageData (Result Http.Error MPH.Data)
+    | GotPages (Result Http.Error (List Page.Page))
     | LoginMsg Login.Message
     | HomeMsg Home.Message
     | EditPostMsg EditPost.Message
@@ -195,6 +202,12 @@ update message model =
             updatePageData pd model
 
         GotPageData (Err _) ->
+            ( model, Cmd.none )
+
+        GotPages (Ok pages) ->
+            updatePages pages model
+
+        GotPages (Err _) ->
             ( model, Cmd.none )
 
         LoginMsg msg ->
@@ -234,6 +247,17 @@ updatePageData : MPH.Data -> Model -> ( Model, Cmd Message )
 updatePageData pd model =
     ( updateSession (Session.updatePageData pd) model
     , storePageData (MPH.encodeLocal pd)
+    )
+
+
+updatePages : List Page.Page -> Model -> ( Model, Cmd Message )
+updatePages pages model =
+    let
+        newModel =
+            updateSession (Session.updatePages pages) model
+    in
+    ( newModel
+    , storeSession (Session.encode (getSession newModel))
     )
 
 
