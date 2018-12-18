@@ -37,6 +37,16 @@ init session path =
     )
 
 
+hasChanges : Model -> Bool
+hasChanges model =
+    case ( model.originalPage, model.page ) of
+        ( Just o, Just n ) ->
+            Page.hasChanges o n
+
+        _ ->
+            False
+
+
 type Message
     = NoOp
     | GotPage (Result Http.Error Page.Page)
@@ -70,7 +80,12 @@ update msg model =
             ( { model | editor = editor }, Cmd.none )
 
         SavePage ->
-            ( model, Cmd.none )
+            case model.page of
+                Just page ->
+                    ( model, Page.update SavedPage page model.session.micropub )
+
+                Nothing ->
+                    ( model, Cmd.none )
 
         SavedPage (Ok _) ->
             ( { model | originalPage = model.page }, Cmd.none )
@@ -105,8 +120,8 @@ view model =
 editPage : Model -> Page.Page -> Html Message
 editPage model page =
     let
-        hasChanges =
-            True
+        changed =
+            hasChanges model
 
         url =
             model.session.micropub.token.me ++ Page.shortPath page
@@ -114,7 +129,7 @@ editPage model page =
     Html.form
         [ class "w-full h-screen flex flex-col"
         , onSubmit
-            (if hasChanges then
+            (if changed then
                 SavePage
 
              else
@@ -134,7 +149,7 @@ editPage model page =
             , button
                 [ type_ "submit"
                 , class "px-3 py-2 mx-1 rounded"
-                , if hasChanges then
+                , if changed then
                     class "font-bold bg-blue-dark text-white"
 
                   else
@@ -144,14 +159,14 @@ editPage model page =
             , button
                 [ type_ "button"
                 , onClick
-                    (if hasChanges then
+                    (if changed then
                         RevertPage
 
                      else
                         NoOp
                     )
                 , class "font-medium px-3 py-2 mx-1 rounded"
-                , if hasChanges then
+                , if changed then
                     class "bg-grey-lighter text-grey-darker"
 
                   else
