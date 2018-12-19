@@ -104,7 +104,16 @@ updatePage f model =
 
 view : Model -> Skeleton.Details Message
 view model =
-    { title = "It's Bloggin' Time!"
+    let
+        title =
+            case model.page of
+                Just page ->
+                    "Edit Page: " ++ page.name
+
+                Nothing ->
+                    "Edit Page"
+    in
+    { title = title
     , body =
         [ case model.page of
             Nothing ->

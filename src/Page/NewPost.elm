@@ -105,7 +105,7 @@ supportedFields t =
 
 view : Model -> Skeleton.Details Message
 view model =
-    { title = "It's Bloggin' Time!"
+    { title = "New " ++ MP.postTypeName model.postType
     , body = [ editPost model ]
     , session = model.session
     }

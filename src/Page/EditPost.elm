@@ -106,7 +106,7 @@ updatePost f model =
 
 view : Model -> Skeleton.Details Message
 view model =
-    { title = "It's Bloggin' Time!"
+    { title = "Edit Post"
     , body =
         [ case model.post of
             Nothing ->

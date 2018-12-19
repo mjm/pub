@@ -160,9 +160,9 @@ view : Model -> Browser.Document Message
 view model =
     case model.page of
         NotFound _ ->
-            { title = "Not Found"
+            { title = "Page Not Found - Pub"
             , body =
-                [ h1 [] [ text "Not Found" ]
+                [ h1 [] [ text "Page Not Found" ]
                 , p [] [ text "Nothing found at this URL." ]
                 ]
             }
@@ -185,7 +185,7 @@ view model =
 
 mapDocument : (a -> msg) -> Browser.Document a -> Browser.Document msg
 mapDocument f doc =
-    { title = doc.title
+    { title = doc.title ++ " - Pub"
     , body = List.map (Html.map f) doc.body
     }
 

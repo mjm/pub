@@ -187,7 +187,7 @@ setMicropubSession model token =
 
 view : Model -> Browser.Document Message
 view model =
-    { title = "Login to your Blog"
+    { title = "Login"
     , body =
         [ div [ class "w-1/3 bg-white mx-auto mt-16 p-6 shadow-md rounded-lg" ]
             (if model.loggingIn then

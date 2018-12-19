@@ -45,7 +45,7 @@ update msg model =
 
 view : Model -> Skeleton.Details Message
 view model =
-    { title = "It's Bloggin' Time!"
+    { title = "Welcome"
     , body =
         [ p [] [ text "This blog supports the following post types:" ]
         , ul [ class "list-reset flex mt-4" ]

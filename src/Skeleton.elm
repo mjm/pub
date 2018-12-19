@@ -19,7 +19,7 @@ type alias Details msg =
 
 view : (a -> msg) -> Details a -> Browser.Document msg
 view toMsg details =
-    { title = details.title
+    { title = details.title ++ " - Pub"
     , body =
         [ div [ class "font-sans flex h-screen" ]
             [ nav [ class "flex flex-col w-1/4 xl:w-1/5 min-h-screen bg-orange-lightest shadow-lg z-30 pt-2 overflow-y-auto" ]
