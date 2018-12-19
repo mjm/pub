@@ -1,4 +1,4 @@
-port module Main exposing (main)
+module Main exposing (main)
 
 import Blog.Page as Page
 import Browser
@@ -16,18 +16,13 @@ import Page.EditPost as EditPost
 import Page.Home as Home
 import Page.Login as Login
 import Page.NewPost as NewPost
+import Ports
 import Session
 import Skeleton
 import Url
 import Url.Builder as UB
 import Url.Parser exposing ((</>), (<?>), Parser, map, parse, s, string, top)
 import Url.Parser.Query as Query
-
-
-port storePageData : E.Value -> Cmd msg
-
-
-port storeSession : E.Value -> Cmd msg
 
 
 type alias Model =
@@ -274,7 +269,7 @@ update message model =
 updatePageData : MPH.Data -> Model -> ( Model, Cmd Message )
 updatePageData pd model =
     ( updateSession (Session.updatePageData pd) model
-    , storePageData (MPH.encodeLocal pd)
+    , Ports.storePageData (MPH.encodeLocal pd)
     )
 
 
@@ -285,7 +280,7 @@ updatePages pages model =
             updateSession (Session.updatePages pages) model
     in
     ( newModel
-    , storeSession (Session.encode (getSession newModel))
+    , Ports.storeSession (Session.encode (getSession newModel))
     )
 
 
@@ -380,8 +375,6 @@ stepUrl url model =
             Login.init
                 { session = session
                 , callback = callback
-                , storePageData = storePageData
-                , storeSession = storeSession
                 , key = model.key
                 , rootUrl = model.rootUrl
                 }

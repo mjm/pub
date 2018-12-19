@@ -16,6 +16,7 @@ import IndieAuth as Auth
 import Json.Encode as E
 import Micropub as MP
 import Micropub.Html as MPH
+import Ports
 import Session
 import Url.Builder as UB
 
@@ -25,8 +26,6 @@ type alias Model =
     , rootUrl : String
     , session : Session.Data
     , callback : Maybe Auth.Callback
-    , storePageData : E.Value -> Cmd Message
-    , storeSession : E.Value -> Cmd Message
     , siteUrl : String
     , loggingIn : Bool
     , micropub : Maybe MP.Session
@@ -36,8 +35,6 @@ type alias Model =
 type alias Flags =
     { session : Session.Data
     , callback : Maybe Auth.Callback
-    , storePageData : E.Value -> Cmd Message
-    , storeSession : E.Value -> Cmd Message
     , key : Nav.Key
     , rootUrl : String
     }
@@ -58,8 +55,6 @@ init flags =
       , rootUrl = flags.rootUrl
       , session = flags.session
       , callback = flags.callback
-      , storePageData = flags.storePageData
-      , storeSession = flags.storeSession
       , siteUrl = ""
       , loggingIn = loggingIn
       , micropub = Nothing
@@ -113,7 +108,7 @@ update msg model =
                 Just endpoint ->
                     Cmd.batch
                         [ loadAuthPage model.rootUrl endpoint model.siteUrl
-                        , model.storePageData (MPH.encodeLocal pd)
+                        , Ports.storePageData (MPH.encodeLocal pd)
                         ]
             )
 
@@ -133,7 +128,7 @@ update msg model =
             in
             ( { model | session = newSession }
             , Cmd.batch
-                [ model.storeSession (Session.encode newSession)
+                [ Ports.storeSession (Session.encode newSession)
                 , Nav.pushUrl model.key "/"
                 ]
             )
