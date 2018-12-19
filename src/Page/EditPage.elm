@@ -20,6 +20,7 @@ import Skeleton
 
 type alias Model =
     { session : Session.LoggedInData
+    , path : String
     , originalPage : Maybe Page.Page
     , page : Maybe Page.Page
     , editor : Editor.State
@@ -29,6 +30,7 @@ type alias Model =
 init : Session.LoggedInData -> String -> ( Model, Cmd Message )
 init session path =
     ( { session = session
+      , path = path
       , originalPage = Nothing
       , page = Nothing
       , editor = Editor.create
@@ -123,6 +125,7 @@ view model =
                 editPage model page
         ]
     , session = model.session
+    , selection = Skeleton.Page model.path
     }
 
 

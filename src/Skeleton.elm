@@ -1,4 +1,8 @@
-module Skeleton exposing (Details, view)
+module Skeleton exposing
+    ( Details
+    , Selection(..)
+    , view
+    )
 
 import Blog.Page as Page
 import Browser
@@ -14,7 +18,14 @@ type alias Details msg =
     { title : String
     , body : List (Html msg)
     , session : Session.LoggedInData
+    , selection : Selection
     }
+
+
+type Selection
+    = Empty
+    | Post String
+    | Page String
 
 
 view : (a -> msg) -> Details a -> Browser.Document msg
@@ -25,10 +36,10 @@ view toMsg details =
             [ nav [ class "flex flex-col w-1/4 xl:w-1/5 min-h-screen bg-orange-lightest shadow-lg z-30 pt-2 overflow-y-auto" ]
                 [ navHeader "Posts"
                 , div [ class "flex-row" ]
-                    [ sidebarPosts details.session ]
+                    [ sidebarPosts details ]
                 , navHeader "Pages"
                 , div [ class "flex-row" ]
-                    [ sidebarPages details.session ]
+                    [ sidebarPages details ]
                 , navHeader "Templates"
                 , div [ class "text-orange-darkest m-3 text-sm" ] [ text "No templates" ]
                 ]
@@ -51,47 +62,75 @@ navHeader title =
         ]
 
 
-sidebarPosts : Session.LoggedInData -> Html msg
-sidebarPosts session =
+sidebarPosts : Details a -> Html msg
+sidebarPosts details =
     ul [ class "list-reset text-sm" ] <|
-        List.map sidebarPost session.pageData.entries
+        List.map
+            (sidebarPost details.selection)
+            details.session.pageData.entries
 
 
-sidebarPost : Microformats.Item -> Html msg
-sidebarPost item =
+sidebarPost : Selection -> Microformats.Item -> Html msg
+sidebarPost selection item =
     let
         name =
             Maybe.withDefault "Untitled" (Microformats.string "name" item)
 
         url =
             Microformats.string "url" item
+
+        hrefUrl =
+            case url of
+                Nothing ->
+                    "#"
+
+                Just u ->
+                    Urls.editPost u
+
+        isSelected =
+            case ( url, selection ) of
+                ( Just u1, Post u2 ) ->
+                    u1 == u2
+
+                _ ->
+                    False
     in
-    li [ class "text-orange-darkest" ]
-        [ case url of
-            Nothing ->
-                p [ class "p-1" ] [ text name ]
-
-            Just u ->
-                a
-                    [ class "-mt-1 px-3 pb-2 pt-2 block no-underline text-orange-darkest truncate hover:bg-orange-lighter"
-                    , href (Urls.editPost u)
-                    ]
-                    [ text name ]
-        ]
+    sidebarItem name hrefUrl isSelected
 
 
-sidebarPages : Session.LoggedInData -> Html msg
-sidebarPages session =
+sidebarPages : Details a -> Html msg
+sidebarPages details =
     ul [ class "list-reset text-sm" ] <|
-        List.map sidebarPage session.pages
+        List.map (sidebarPage details.selection) details.session.pages
 
 
-sidebarPage : Page.Page -> Html msg
-sidebarPage page =
-    li [ class "text-orange-darkest" ]
+sidebarPage : Selection -> Page.Page -> Html msg
+sidebarPage selection page =
+    let
+        isSelected =
+            case selection of
+                Page path ->
+                    Page.shortPath page == path
+
+                _ ->
+                    False
+    in
+    sidebarItem page.name (Urls.editPage (Page.shortPath page)) isSelected
+
+
+sidebarItem : String -> String -> Bool -> Html msg
+sidebarItem title url isSelected =
+    li []
         [ a
-            [ class "-mt-1 px-3 pb-2 pt-2 block no-underline text-orange-darkest truncate hover:bg-orange-lighter"
-            , href (Urls.editPage (Page.shortPath page))
+            [ class "-mt-1 px-3 pb-2 pt-2 block no-underline truncate"
+            , class
+                (if isSelected then
+                    "text-white bg-orange-dark"
+
+                 else
+                    "text-orange-darkest hover:bg-orange-lighter"
+                )
+            , href url
             ]
-            [ text page.name ]
+            [ text title ]
         ]

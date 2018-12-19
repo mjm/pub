@@ -23,6 +23,7 @@ import Skeleton
 
 type alias Model =
     { session : Session.LoggedInData
+    , url : String
     , originalPost : Maybe Microformats.Item
     , post : Maybe Microformats.Item
     , diff : Maybe Diff.Diff
@@ -33,6 +34,7 @@ type alias Model =
 init : Session.LoggedInData -> String -> ( Model, Cmd Message )
 init session url =
     ( { session = session
+      , url = url
       , originalPost = Nothing
       , post = Nothing
       , diff = Nothing
@@ -116,6 +118,7 @@ view model =
                 editPost model post
         ]
     , session = model.session
+    , selection = Skeleton.Post model.url
     }
 
 

@@ -63,4 +63,5 @@ view model =
             )
         ]
     , session = model.session
+    , selection = Skeleton.Empty
     }

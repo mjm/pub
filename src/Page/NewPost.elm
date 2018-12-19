@@ -108,6 +108,7 @@ view model =
     { title = "New " ++ MP.postTypeName model.postType
     , body = [ editPost model ]
     , session = model.session
+    , selection = Skeleton.Empty
     }
 
 
