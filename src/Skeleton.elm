@@ -34,12 +34,12 @@ view toMsg details =
     , body =
         [ div [ class "font-sans flex h-screen" ]
             [ nav [ class "flex flex-col w-1/4 xl:w-1/5 min-h-screen bg-orange-lightest shadow-lg z-30 pt-2 overflow-y-auto" ]
-                [ navHeader "Posts"
-                , div [ class "flex-row" ]
-                    [ sidebarPosts details ]
-                , navHeader "Pages"
+                [ navHeader "Pages"
                 , div [ class "flex-row" ]
                     [ sidebarPages details ]
+                , navHeader "Posts"
+                , div [ class "flex-row" ]
+                    [ sidebarPosts details ]
                 , navHeader "Templates"
                 , div [ class "text-orange-darkest m-3 text-sm" ] [ text "No templates" ]
                 ]
