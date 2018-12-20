@@ -11,7 +11,9 @@ module Microformats exposing
     , getLink
     , itemDecoder
     , setString
+    , setStrings
     , string
+    , strings
     )
 
 import Dict exposing (Dict)
@@ -175,3 +177,32 @@ setString prop val item =
 
     else
         { item | properties = Dict.insert prop [ Str val ] item.properties }
+
+
+strings : String -> Item -> Maybe (List String)
+strings prop item =
+    case Dict.get prop item.properties of
+        Just xs ->
+            Just <|
+                List.filterMap
+                    (\x ->
+                        case x of
+                            Str s ->
+                                Just s
+
+                            _ ->
+                                Nothing
+                    )
+                    xs
+
+        Nothing ->
+            Nothing
+
+
+setStrings : String -> List String -> Item -> Item
+setStrings prop vals item =
+    if List.isEmpty vals then
+        { item | properties = Dict.remove prop item.properties }
+
+    else
+        { item | properties = Dict.insert prop (List.map Str vals) item.properties }

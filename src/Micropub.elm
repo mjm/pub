@@ -6,6 +6,7 @@ module Micropub exposing
     , createPost
     , encodeConfig
     , encodeSession
+    , expectCreated
     , getConfig
     , getPost
     , getPostType
@@ -31,12 +32,13 @@ import Url.Builder as UB
 type alias Session =
     { url : String
     , token : Auth.AuthorizedToken
+    , mediaUrl : Maybe String
     }
 
 
 login : String -> Auth.AuthorizedToken -> Session
-login =
-    Session
+login url token =
+    { url = url, token = token, mediaUrl = Nothing }
 
 
 type alias Config =
@@ -178,6 +180,7 @@ sessionDecoder =
     D.succeed Session
         |> required "url" D.string
         |> required "token" Auth.tokenDecoder
+        |> optional "mediaUrl" (D.maybe D.string) Nothing
 
 
 encodeSession : Session -> E.Value
@@ -185,6 +188,14 @@ encodeSession sess =
     E.object
         [ ( "url", E.string sess.url )
         , ( "token", Auth.encodeToken sess.token )
+        , ( "mediaUrl"
+          , case sess.mediaUrl of
+                Just u ->
+                    E.string u
+
+                Nothing ->
+                    E.null
+          )
         ]
 
 

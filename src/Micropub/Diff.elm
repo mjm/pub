@@ -29,7 +29,7 @@ diff : MF.Item -> MF.Item -> Diff
 diff original edited =
     let
         adds =
-            Dict.diff edited.properties original.properties
+            Dict.empty
 
         deletes =
             Dict.diff original.properties edited.properties
@@ -41,7 +41,7 @@ diff original edited =
                 (\prop vals ->
                     case Dict.get prop original.properties of
                         Nothing ->
-                            False
+                            True
 
                         Just o ->
                             vals /= o

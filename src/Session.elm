@@ -40,20 +40,24 @@ empty =
 
 login : Micropub.Session -> Micropub.Config -> Data -> Data
 login mp cfg sess =
+    let
+        newMp =
+            { mp | mediaUrl = cfg.mediaEndpoint }
+    in
     case sess of
         Guest ->
             Guest
 
         LoggingIn pd ->
             LoggedIn
-                { micropub = mp
+                { micropub = newMp
                 , config = cfg
                 , pageData = pd
                 , pages = []
                 }
 
         LoggedIn data ->
-            LoggedIn { data | micropub = mp, config = cfg }
+            LoggedIn { data | micropub = newMp, config = cfg }
 
 
 updatePageData : MPH.Data -> Data -> Data
