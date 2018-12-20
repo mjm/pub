@@ -139,19 +139,13 @@ update msg model =
 
 loadAuthPage : String -> String -> String -> Cmd msg
 loadAuthPage client endpoint url =
-    let
-        authUrl =
-            endpoint
-                ++ UB.toQuery
-                    [ UB.string "me" url
-                    , UB.string "client_id" client
-                    , UB.string "redirect_uri" (client ++ "callback")
-                    , UB.string "state" "foo"
-                    , UB.string "response_type" "code"
-                    , UB.string "scope" "create update delete"
-                    ]
-    in
-    Nav.load authUrl
+    Auth.begin
+        { clientId = client
+        , redirectUri = client ++ "callback"
+        , me = url
+        , scopes = [ "create", "update", "delete" ]
+        }
+        endpoint
 
 
 setMicropubSession : Model -> Auth.AuthorizedToken -> ( Model, Cmd Message )
