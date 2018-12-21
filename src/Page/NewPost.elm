@@ -20,6 +20,7 @@ import Micropub.Html as MPH
 import Session
 import Skeleton
 import Urls
+import View.Photos as Photos
 
 
 type alias Model =
@@ -28,6 +29,7 @@ type alias Model =
     , post : Microformats.Item
     , postType : MP.PostType
     , editor : Editor.State
+    , photos : Photos.Model
     }
 
 
@@ -38,6 +40,7 @@ init key session postType =
       , post = Microformats.createEntry
       , postType = postType
       , editor = Editor.create
+      , photos = Photos.init session.micropub
       }
     , Cmd.none
     )
@@ -50,6 +53,7 @@ type Message
     | SetEditorState Editor.State
     | SavePost
     | SavedPost (Result Http.Error String)
+    | PhotosMsg Photos.Message
 
 
 update : Message -> Model -> ( Model, Cmd Message )
@@ -76,15 +80,33 @@ update msg model =
         SavedPost (Err _) ->
             ( model, Cmd.none )
 
+        PhotosMsg m ->
+            updatePhotos m model
+
 
 updatePost : (Microformats.Item -> Microformats.Item) -> Model -> Model
 updatePost f model =
     { model | post = f model.post }
 
 
+updatePhotos : Photos.Message -> Model -> ( Model, Cmd Message )
+updatePhotos msg model =
+    let
+        ( newPhotos, cmds ) =
+            Photos.update msg model.photos
+
+        newModel =
+            updatePost (Microformats.setStrings "photo" (Photos.urls newPhotos)) model
+    in
+    ( { newModel | photos = newPhotos }
+    , Cmd.map PhotosMsg cmds
+    )
+
+
 type Field
     = Name
     | Content
+    | Photo
 
 
 supportedFields : MP.PostType -> List Field
@@ -97,7 +119,7 @@ supportedFields t =
             [ Name, Content ]
 
         MP.Photo _ ->
-            [ Name, Content ]
+            [ Content, Photo ]
 
         MP.Unknown _ _ ->
             []
@@ -172,6 +194,15 @@ editPost model =
                     }
                     model.editor
                 ]
+
+          else
+            text ""
+        , if displayField Photo then
+            Photos.view
+                { attrs = []
+                , toMsg = PhotosMsg
+                }
+                model.photos
 
           else
             text ""
