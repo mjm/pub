@@ -1,8 +1,8 @@
 module Upload exposing
     ( FileBag, Upload(..), Tag
     , emptyBag, fromUrls
-    , urls, displayUrls
-    , append, setDataUrl, setUploadedUrl
+    , urls, displayUrls, taggedMap
+    , append, setDataUrl, setUploadedUrl, remove
     )
 
 {-| The Upload module provides a data structure for keeping track of files
@@ -21,12 +21,12 @@ that are being uploaded to the Micropub media endpoint.
 
 # Getting URLs
 
-@docs urls, displayUrls
+@docs urls, displayUrls, taggedMap
 
 
 # Changing
 
-@docs append, setDataUrl, setUploadedUrl
+@docs append, setDataUrl, setUploadedUrl, remove
 
 -}
 
@@ -134,6 +134,22 @@ displayUrl upload =
                     Nothing
 
 
+{-| Maps over the displayable files in the bag.
+
+Includes the tag for the file, so that the file can updated or deleted in
+response to a message.
+
+-}
+taggedMap : (Tag -> String -> a) -> FileBag -> List a
+taggedMap f bag =
+    bag
+        |> Array.indexedMap
+            (\i file -> ( Tag i, displayUrl file ))
+        |> Array.toList
+        |> List.filterMap
+            (\( tag, url ) -> Maybe.map (f tag) url)
+
+
 {-| Add new files to the end of the bag, and start uploading their contents to
 the server.
 
@@ -237,3 +253,20 @@ setUploadedUrl (Tag i) url bag =
                         file
         )
         bag
+
+
+{-| Remove a single file from the bag.
+
+This does not remove the file from the server if it has already been uploaded.
+
+-}
+remove : Tag -> FileBag -> FileBag
+remove (Tag i) bag =
+    let
+        firstHalf =
+            Array.slice 0 i bag
+
+        secondHalf =
+            Array.slice (i + 1) (Array.length bag) bag
+    in
+    Array.append firstHalf secondHalf

@@ -64,6 +64,7 @@ type Message
     | RevertPost
     | GotPhotoUrl Upload.Tag String
     | UploadedPhoto Upload.Tag (Result Http.Error String)
+    | DeletePhoto Upload.Tag
 
 
 update : Message -> Model -> ( Model, Cmd Message )
@@ -119,11 +120,14 @@ update msg model =
         GotPhotoUrl tag url ->
             ( { model | photos = Upload.setDataUrl tag url model.photos }, Cmd.none )
 
-        UploadedPhoto i (Ok url) ->
-            ( setUrl i url model, Cmd.none )
+        UploadedPhoto tag (Ok url) ->
+            ( updatePhotos (Upload.setUploadedUrl tag url) model, Cmd.none )
 
         UploadedPhoto _ (Err _) ->
             ( model, Cmd.none )
+
+        DeletePhoto tag ->
+            ( updatePhotos (Upload.remove tag) model, Cmd.none )
 
 
 existingFiles : Microformats.Item -> Upload.FileBag
@@ -157,17 +161,14 @@ appendPhotos files model =
     ( { model | photos = newBag, draggingPhoto = False }, cmds )
 
 
-setUrl : Upload.Tag -> String -> Model -> Model
-setUrl tag url model =
+updatePhotos : (Upload.FileBag -> Upload.FileBag) -> Model -> Model
+updatePhotos f model =
     let
         newFiles =
-            Upload.setUploadedUrl tag url model.photos
-
-        photos =
-            Upload.urls newFiles
+            f model.photos
 
         updatedModel =
-            updatePost (Microformats.setStrings "photo" photos) model
+            updatePost (Microformats.setStrings "photo" (Upload.urls newFiles)) model
     in
     { updatedModel | photos = newFiles }
 
@@ -314,9 +315,19 @@ editPost model item =
                 [ h3 [ class "uppercase text-sm mb-2 text-orange-dark pointer-events-none" ]
                     [ text <| "Photos (" ++ String.fromInt (List.length photos) ++ ")" ]
                 , p [ class "flex flex-row items-start overflow-hidden pointer-events-none" ] <|
-                    List.map
-                        (\u -> img [ src u, class "w-1/4 max-h-full pointer-events-auto" ] [])
-                        photos
+                    Upload.taggedMap
+                        (\tag u ->
+                            div [ class "w-1/4 max-h-full pointer-events-auto relative" ]
+                                [ button
+                                    [ class "font-bold rounded-full bg-blue-dark text-white absolute pin-t pin-r m-2 w-6 h-6"
+                                    , type_ "button"
+                                    , onClick (DeletePhoto tag)
+                                    ]
+                                    [ text "x" ]
+                                , img [ src u ] []
+                                ]
+                        )
+                        model.photos
                 ]
             )
         ]
