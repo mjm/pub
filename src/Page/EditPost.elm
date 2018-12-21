@@ -8,11 +8,9 @@ module Page.EditPost exposing
 
 import Browser
 import Editor
-import File exposing (File)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput, onSubmit)
-import Html.Events.Drag exposing (..)
 import Http
 import IndieAuth as Auth
 import Microformats
@@ -21,7 +19,7 @@ import Micropub.Diff as Diff
 import Micropub.Html as MPH
 import Session
 import Skeleton
-import Upload
+import View.Photos as Photos
 
 
 type alias Model =
@@ -31,8 +29,7 @@ type alias Model =
     , post : Maybe Microformats.Item
     , diff : Maybe Diff.Diff
     , editor : Editor.State
-    , draggingPhoto : Bool
-    , photos : Upload.FileBag
+    , photos : Photos.Model
     }
 
 
@@ -44,8 +41,7 @@ init session url =
       , post = Nothing
       , diff = Nothing
       , editor = Editor.create
-      , draggingPhoto = False
-      , photos = Upload.emptyBag
+      , photos = Photos.init session.micropub
       }
     , MP.getPost GotPost url session.micropub
     )
@@ -56,15 +52,11 @@ type Message
     | GotPost (Result Http.Error Microformats.Item)
     | SetName String
     | SetContent String
-    | SetPhoto (List File)
-    | SetDraggingPhoto Bool
     | SetEditorState Editor.State
     | SavePost
     | SavedPost (Result Http.Error ())
     | RevertPost
-    | GotPhotoUrl Upload.Tag String
-    | UploadedPhoto Upload.Tag (Result Http.Error String)
-    | DeletePhoto Upload.Tag
+    | PhotosMsg Photos.Message
 
 
 update : Message -> Model -> ( Model, Cmd Message )
@@ -77,7 +69,7 @@ update msg model =
             ( { model
                 | originalPost = Just post
                 , post = Just post
-                , photos = existingFiles post
+                , photos = Photos.setUrls (existingPhotos post) model.photos
               }
             , Cmd.none
             )
@@ -90,12 +82,6 @@ update msg model =
 
         SetContent content ->
             ( updatePost (Microformats.setString "content" content) model, Cmd.none )
-
-        SetPhoto files ->
-            appendPhotos files model
-
-        SetDraggingPhoto isDragging ->
-            ( { model | draggingPhoto = isDragging }, Cmd.none )
 
         SetEditorState editor ->
             ( { model | editor = editor }, Cmd.none )
@@ -117,27 +103,13 @@ update msg model =
         RevertPost ->
             ( revertPost model, Cmd.none )
 
-        GotPhotoUrl tag url ->
-            ( { model | photos = Upload.setDataUrl tag url model.photos }, Cmd.none )
-
-        UploadedPhoto tag (Ok url) ->
-            ( updatePhotos (Upload.setUploadedUrl tag url) model, Cmd.none )
-
-        UploadedPhoto _ (Err _) ->
-            ( model, Cmd.none )
-
-        DeletePhoto tag ->
-            ( updatePhotos (Upload.remove tag) model, Cmd.none )
+        PhotosMsg m ->
+            updatePhotos m model
 
 
-existingFiles : Microformats.Item -> Upload.FileBag
-existingFiles post =
-    case Microformats.strings "photo" post of
-        Nothing ->
-            Upload.emptyBag
-
-        Just urls ->
-            Upload.fromUrls urls
+existingPhotos : Microformats.Item -> List String
+existingPhotos post =
+    Maybe.withDefault [] (Microformats.strings "photo" post)
 
 
 updatePost : (Microformats.Item -> Microformats.Item) -> Model -> Model
@@ -152,39 +124,36 @@ updatePost f model =
     { model | post = newPost, diff = diff }
 
 
-appendPhotos : List File -> Model -> ( Model, Cmd Message )
-appendPhotos files model =
+updatePhotos : Photos.Message -> Model -> ( Model, Cmd Message )
+updatePhotos msg model =
     let
-        ( newBag, cmds ) =
-            Upload.append GotPhotoUrl UploadedPhoto model.session.micropub files model.photos
+        ( newPhotos, cmds ) =
+            Photos.update msg model.photos
+
+        newModel =
+            updatePost (Microformats.setStrings "photo" (Photos.urls newPhotos)) model
     in
-    ( { model | photos = newBag, draggingPhoto = False }, cmds )
-
-
-updatePhotos : (Upload.FileBag -> Upload.FileBag) -> Model -> Model
-updatePhotos f model =
-    let
-        newFiles =
-            f model.photos
-
-        updatedModel =
-            updatePost (Microformats.setStrings "photo" (Upload.urls newFiles)) model
-    in
-    { updatedModel | photos = newFiles }
+    ( { newModel | photos = newPhotos }
+    , Cmd.map PhotosMsg cmds
+    )
 
 
 revertPost : Model -> Model
 revertPost model =
     let
-        photos =
+        urls =
             case model.originalPost of
                 Just p ->
-                    existingFiles p
+                    existingPhotos p
 
                 Nothing ->
-                    Upload.emptyBag
+                    []
     in
-    { model | post = model.originalPost, diff = Nothing, photos = photos }
+    { model
+        | post = model.originalPost
+        , diff = Nothing
+        , photos = Photos.setUrls urls model.photos
+    }
 
 
 view : Model -> Skeleton.Details Message
@@ -208,9 +177,6 @@ editPost model item =
     let
         hasChanges =
             Maybe.withDefault False <| Maybe.map Diff.hasChanges model.diff
-
-        photos =
-            Upload.displayUrls model.photos
     in
     Html.form
         [ class "w-full h-screen flex flex-col"
@@ -285,49 +251,9 @@ editPost model item =
                 }
                 model.editor
             ]
-        , div
-            [ class "mt-2 p-3 flex flex-col rounded-lg"
-            , class
-                (if model.draggingPhoto then
-                    "bg-orange-lighter"
-
-                 else
-                    "bg-orange-lightest"
-                )
-            , class
-                (if List.isEmpty photos then
-                    "h-16"
-
-                 else
-                    "h-48"
-                )
-            , onDrop SetPhoto
-            , onDragOver NoOp
-            , onDragEnter (SetDraggingPhoto True)
-            , onDragLeave (SetDraggingPhoto False)
-            ]
-            (if List.isEmpty photos then
-                [ p [ class "my-auto text-center pointer-events-none text-sm uppercase font-semibold text-orange-dark" ]
-                    [ text "Drop photos here" ]
-                ]
-
-             else
-                [ h3 [ class "uppercase text-sm mb-2 text-orange-dark pointer-events-none" ]
-                    [ text <| "Photos (" ++ String.fromInt (List.length photos) ++ ")" ]
-                , p [ class "flex flex-row items-start overflow-hidden pointer-events-none" ] <|
-                    Upload.taggedMap
-                        (\tag u ->
-                            div [ class "w-1/4 max-h-full pointer-events-auto relative" ]
-                                [ button
-                                    [ class "font-bold rounded-full bg-blue-dark text-white absolute pin-t pin-r m-2 w-6 h-6"
-                                    , type_ "button"
-                                    , onClick (DeletePhoto tag)
-                                    ]
-                                    [ text "x" ]
-                                , img [ src u ] []
-                                ]
-                        )
-                        model.photos
-                ]
-            )
+        , Photos.view
+            { attrs = []
+            , toMsg = PhotosMsg
+            }
+            model.photos
         ]
