@@ -177,9 +177,9 @@ editPage model page =
                      else
                         NoOp
                     )
-                , class "font-semibold px-3 py-2 mx-1 rounded"
+                , class "px-3 py-2 mx-1 rounded"
                 , if changed then
-                    class "bg-grey-lighter text-grey-darker"
+                    class "font-semibold bg-grey-lighter text-grey-darker"
 
                   else
                     class "bg-grey-lightest text-grey"
