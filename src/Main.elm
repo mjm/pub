@@ -160,10 +160,7 @@ view model =
     case model.page of
         NotFound _ ->
             { title = "Page Not Found - Pub"
-            , body =
-                [ h1 [] [ text "Page Not Found" ]
-                , p [] [ text "Nothing found at this URL." ]
-                ]
+            , body = notFoundView
             }
 
         Login login ->
@@ -180,6 +177,15 @@ view model =
 
         EditPage edit ->
             skeleton EditPageMsg (EditPage.view edit)
+
+
+notFoundView : List (Html Message)
+notFoundView =
+    [ div [ class "w-1/3 bg-white mx-auto mt-16 p-6 shadow-md rounded-lg text-orange-darkest text-center" ]
+        [ h1 [ class "font-light" ] [ text "Page Not Found" ]
+        , p [ class "mt-3" ] [ text "Nothing found at this URL." ]
+        ]
+    ]
 
 
 mapDocument : (a -> msg) -> Browser.Document a -> Browser.Document msg
