@@ -74,10 +74,17 @@ init flags url key =
 
 reloadEverything : Session.LoggedInData -> Cmd Message
 reloadEverything data =
-    Cmd.batch
-        [ MPH.load GotPageData data.micropub.token.me
-        , Page.all GotPages data.micropub
-        ]
+    Cmd.batch [ reloadPosts data, reloadPages data ]
+
+
+reloadPages : Session.LoggedInData -> Cmd Message
+reloadPages data =
+    Page.all GotPages data.micropub
+
+
+reloadPosts : Session.LoggedInData -> Cmd Message
+reloadPosts data =
+    MPH.load GotPageData data.micropub.token.me
 
 
 getSession : Model -> Session.Data
@@ -155,7 +162,11 @@ view : Model -> Browser.Document Message
 view model =
     let
         skeleton =
-            Skeleton.view Logout
+            Skeleton.view
+                { logout = Logout
+                , refreshPages = RefreshPages
+                , refreshPosts = RefreshPosts
+                }
     in
     case model.page of
         NotFound _ ->
@@ -201,6 +212,8 @@ type Message
     | UrlChanged Url.Url
     | GotPageData (Result Http.Error MPH.Data)
     | GotPages (Result Http.Error (List Page.Page))
+    | RefreshPages
+    | RefreshPosts
     | Logout
     | LoginMsg Login.Message
     | HomeMsg Home.Message
@@ -235,6 +248,26 @@ update message model =
 
         GotPages (Err _) ->
             ( model, Cmd.none )
+
+        RefreshPages ->
+            ( model
+            , case getSession model of
+                Session.LoggedIn data ->
+                    reloadPages data
+
+                _ ->
+                    Cmd.none
+            )
+
+        RefreshPosts ->
+            ( model
+            , case getSession model of
+                Session.LoggedIn data ->
+                    reloadPosts data
+
+                _ ->
+                    Cmd.none
+            )
 
         Logout ->
             ( model

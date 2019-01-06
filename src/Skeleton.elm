@@ -29,8 +29,15 @@ type Selection
     | Page String
 
 
-view : msg -> (a -> msg) -> Details a -> Browser.Document msg
-view logoutMsg toMsg details =
+type alias Messages msg =
+    { logout : msg
+    , refreshPages : msg
+    , refreshPosts : msg
+    }
+
+
+view : Messages msg -> (a -> msg) -> Details a -> Browser.Document msg
+view msgs toMsg details =
     { title = details.title ++ " - Pub"
     , body =
         [ div [ class "font-sans flex h-screen" ]
@@ -40,17 +47,32 @@ view logoutMsg toMsg details =
                         [ text (friendlyMe details) ]
                     , button
                         [ class "bg-orange-lighter px-2 py-1 font-bold text-orange-dark rounded"
-                        , onClick logoutMsg
+                        , onClick msgs.logout
                         ]
                         [ text "Logout" ]
                     ]
-                , navHeader "Pages"
+                , div [ class "flex flex-row items-baseline" ]
+                    [ navHeader "Pages"
+                    , button
+                        [ class "text-orange px-3"
+                        , onClick msgs.refreshPages
+                        ]
+                        [ i [ class "fas fa-redo-alt" ] [] ]
+                    ]
                 , div [ class "flex-row" ]
                     [ sidebarPages details ]
-                , navHeader "Posts"
+                , div [ class "flex flex-row items-baseline" ]
+                    [ navHeader "Posts"
+                    , button
+                        [ class "text-orange px-3"
+                        , onClick msgs.refreshPosts
+                        ]
+                        [ i [ class "fas fa-redo-alt" ] [] ]
+                    ]
                 , div [ class "flex-row" ]
                     [ sidebarPosts details ]
-                , navHeader "Templates"
+                , div [ class "flex-row" ]
+                    [ navHeader "Templates" ]
                 , div [ class "text-orange-darkest m-3 text-sm" ] [ text "No templates" ]
                 ]
             , Html.map toMsg <| div [ class "flex flex-col w-3/4 xl:w-4/5 bg-white p-4" ] details.body
@@ -61,14 +83,12 @@ view logoutMsg toMsg details =
 
 navHeader : String -> Html msg
 navHeader title =
-    div [ class "flex-row" ]
-        [ a
-            [ href Urls.home
-            , class "no-underline text-orange"
-            ]
-            [ h4 [ class "mt-2 mb-2 uppercase no-underline block px-3 text-xs font-bold" ]
-                [ text title ]
-            ]
+    a
+        [ href Urls.home
+        , class "no-underline text-orange flex-grow"
+        ]
+        [ h4 [ class "mt-2 mb-2 uppercase no-underline block px-3 text-xs font-bold" ]
+            [ text title ]
         ]
 
 

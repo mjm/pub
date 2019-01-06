@@ -1,4 +1,5 @@
 require('./styles.css');
+require('@fortawesome/fontawesome-free/css/all.css');
 var main = require('./Main');
 var Elm = main.Elm;
 
