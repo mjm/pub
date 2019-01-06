@@ -153,6 +153,10 @@ updateSession f model =
 
 view : Model -> Browser.Document Message
 view model =
+    let
+        skeleton =
+            Skeleton.view Logout
+    in
     case model.page of
         NotFound _ ->
             { title = "Page Not Found - Pub"
@@ -166,16 +170,16 @@ view model =
             mapDocument LoginMsg (Login.view login)
 
         Home home ->
-            Skeleton.view HomeMsg (Home.view home)
+            skeleton HomeMsg (Home.view home)
 
         EditPost edit ->
-            Skeleton.view EditPostMsg (EditPost.view edit)
+            skeleton EditPostMsg (EditPost.view edit)
 
         NewPost new ->
-            Skeleton.view NewPostMsg (NewPost.view new)
+            skeleton NewPostMsg (NewPost.view new)
 
         EditPage edit ->
-            Skeleton.view EditPageMsg (EditPage.view edit)
+            skeleton EditPageMsg (EditPage.view edit)
 
 
 mapDocument : (a -> msg) -> Browser.Document a -> Browser.Document msg
@@ -191,6 +195,7 @@ type Message
     | UrlChanged Url.Url
     | GotPageData (Result Http.Error MPH.Data)
     | GotPages (Result Http.Error (List Page.Page))
+    | Logout
     | LoginMsg Login.Message
     | HomeMsg Home.Message
     | EditPostMsg EditPost.Message
@@ -224,6 +229,14 @@ update message model =
 
         GotPages (Err _) ->
             ( model, Cmd.none )
+
+        Logout ->
+            ( model
+            , Cmd.batch
+                [ Ports.clearSession ()
+                , Nav.pushUrl model.key "/login"
+                ]
+            )
 
         LoginMsg msg ->
             case model.page of

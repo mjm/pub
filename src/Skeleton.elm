@@ -8,6 +8,7 @@ import Blog.Page as Page
 import Browser
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Html.Events exposing (onClick)
 import Microformats
 import Session
 import Url.Builder as UB
@@ -28,13 +29,22 @@ type Selection
     | Page String
 
 
-view : (a -> msg) -> Details a -> Browser.Document msg
-view toMsg details =
+view : msg -> (a -> msg) -> Details a -> Browser.Document msg
+view logoutMsg toMsg details =
     { title = details.title ++ " - Pub"
     , body =
         [ div [ class "font-sans flex h-screen" ]
             [ nav [ class "flex flex-col w-1/4 xl:w-1/5 min-h-screen bg-orange-lightest shadow-lg z-30 pt-2 overflow-y-auto" ]
-                [ navHeader "Pages"
+                [ div [ class "flex flex-row text-xs mb-2 px-3 items-baseline" ]
+                    [ div [ class "flex-grow text-orange-dark" ]
+                        [ text (friendlyMe details) ]
+                    , button
+                        [ class "bg-orange-lighter px-2 py-1 font-bold text-orange-dark rounded"
+                        , onClick logoutMsg
+                        ]
+                        [ text "Logout" ]
+                    ]
+                , navHeader "Pages"
                 , div [ class "flex-row" ]
                     [ sidebarPages details ]
                 , navHeader "Posts"
@@ -134,3 +144,22 @@ sidebarItem title url isSelected =
             ]
             [ text title ]
         ]
+
+
+friendlyMe : Details a -> String
+friendlyMe details =
+    let
+        me =
+            details.session.micropub.token.me
+
+        trimSlash str =
+            if String.endsWith "/" str then
+                String.dropRight 1 str
+
+            else
+                str
+    in
+    me
+        |> String.replace "https://" ""
+        |> String.replace "http://" ""
+        |> trimSlash

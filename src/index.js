@@ -36,3 +36,8 @@ app.ports.storeSession.subscribe(function(data) {
   localStorage.setItem('pageData', JSON.stringify(pageData));
   localStorage.setItem('session', JSON.stringify(data));
 });
+
+app.ports.clearSession.subscribe(function() {
+  localStorage.removeItem('pageData');
+  localStorage.removeItem('session');
+});
