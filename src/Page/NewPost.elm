@@ -20,6 +20,7 @@ import Micropub.Html as MPH
 import Session
 import Skeleton
 import Urls
+import View.Button as Button
 import View.Photos as Photos
 
 
@@ -28,6 +29,7 @@ type alias Model =
     , session : Session.LoggedInData
     , post : Microformats.Item
     , postType : MP.PostType
+    , isSaving : Bool
     , editor : Editor.State
     , photos : Photos.Model
     }
@@ -39,6 +41,7 @@ init key session postType =
       , session = session
       , post = Microformats.createEntry
       , postType = postType
+      , isSaving = False
       , editor = Editor.create
       , photos = Photos.init session.micropub
       }
@@ -72,13 +75,17 @@ update msg model =
             ( { model | editor = editor }, Cmd.none )
 
         SavePost ->
-            ( model, MP.createPost SavedPost model.post model.session.micropub )
+            ( { model | isSaving = True }
+            , MP.createPost SavedPost model.post model.session.micropub
+            )
 
         SavedPost (Ok url) ->
-            ( model, Nav.pushUrl model.key (Urls.editPost url) )
+            ( { model | isSaving = False }
+            , Nav.pushUrl model.key (Urls.editPost url)
+            )
 
         SavedPost (Err _) ->
-            ( model, Cmd.none )
+            ( { model | isSaving = False }, Cmd.none )
 
         PhotosMsg m ->
             updatePhotos m model
@@ -140,6 +147,16 @@ editPost model =
         isValid =
             True
 
+        saveState =
+            if model.isSaving then
+                Button.Working
+
+            else if isValid then
+                Button.Enabled
+
+            else
+                Button.Disabled
+
         fields =
             supportedFields model.postType
 
@@ -149,7 +166,7 @@ editPost model =
     Html.form
         [ class "w-full h-screen flex flex-col"
         , onSubmit
-            (if isValid then
+            (if saveState == Button.Enabled then
                 SavePost
 
              else
@@ -160,16 +177,7 @@ editPost model =
             [ div [ class "flex-grow" ]
                 [ h3 [] [ text ("New " ++ MP.postTypeName model.postType) ]
                 ]
-            , button
-                [ type_ "submit"
-                , class "px-3 py-2 mx-1 rounded"
-                , if isValid then
-                    class "font-bold bg-blue-dark text-white"
-
-                  else
-                    class "bg-grey-lightest text-grey"
-                ]
-                [ text "Save" ]
+            , Button.save saveState
             ]
         , if displayField Name then
             div [ class "flex-none py-2 border-orange border-b" ]

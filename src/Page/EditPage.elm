@@ -16,6 +16,7 @@ import Http
 import Micropub.Html as MPH
 import Session
 import Skeleton
+import View.Button as Button
 
 
 type alias Model =
@@ -23,6 +24,7 @@ type alias Model =
     , path : String
     , originalPage : Maybe Page.Page
     , page : Maybe Page.Page
+    , isSaving : Bool
     , editor : Editor.State
     }
 
@@ -33,6 +35,7 @@ init session path =
       , path = path
       , originalPage = Nothing
       , page = Nothing
+      , isSaving = False
       , editor = Editor.create
       }
     , Page.get GotPage path session.micropub
@@ -84,16 +87,18 @@ update msg model =
         SavePage ->
             case model.page of
                 Just page ->
-                    ( model, Page.update SavedPage page model.session.micropub )
+                    ( { model | isSaving = True }
+                    , Page.update SavedPage page model.session.micropub
+                    )
 
                 Nothing ->
                     ( model, Cmd.none )
 
         SavedPage (Ok _) ->
-            ( { model | originalPage = model.page }, Cmd.none )
+            ( { model | originalPage = model.page, isSaving = False }, Cmd.none )
 
         SavedPage (Err _) ->
-            ( model, Cmd.none )
+            ( { model | isSaving = False }, Cmd.none )
 
         RevertPage ->
             ( { model | page = model.originalPage }, Cmd.none )
@@ -135,13 +140,23 @@ editPage model page =
         changed =
             hasChanges model
 
+        saveState =
+            if model.isSaving then
+                Button.Working
+
+            else if changed then
+                Button.Enabled
+
+            else
+                Button.Disabled
+
         url =
             model.session.micropub.token.me ++ Page.shortPath page
     in
     Html.form
         [ class "w-full h-screen flex flex-col"
         , onSubmit
-            (if changed then
+            (if saveState == Button.Enabled then
                 SavePage
 
              else
@@ -159,16 +174,7 @@ editPage model page =
                     ]
                     [ text url ]
                 ]
-            , button
-                [ type_ "submit"
-                , class "px-3 py-2 mx-1 rounded"
-                , if changed then
-                    class "font-bold bg-blue-dark text-white"
-
-                  else
-                    class "bg-grey-lightest text-grey"
-                ]
-                [ text "Save" ]
+            , Button.save saveState
             , button
                 [ type_ "button"
                 , onClick

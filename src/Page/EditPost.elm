@@ -19,6 +19,7 @@ import Micropub.Diff as Diff
 import Micropub.Html as MPH
 import Session
 import Skeleton
+import View.Button as Button
 import View.Photos as Photos
 
 
@@ -28,6 +29,7 @@ type alias Model =
     , originalPost : Maybe Microformats.Item
     , post : Maybe Microformats.Item
     , diff : Maybe Diff.Diff
+    , isSaving : Bool
     , editor : Editor.State
     , photos : Photos.Model
     }
@@ -40,6 +42,7 @@ init session url =
       , originalPost = Nothing
       , post = Nothing
       , diff = Nothing
+      , isSaving = False
       , editor = Editor.create
       , photos = Photos.init session.micropub
       }
@@ -89,16 +92,24 @@ update msg model =
         SavePost ->
             case model.diff of
                 Just d ->
-                    ( model, MP.updatePost SavedPost d model.session.micropub )
+                    ( { model | isSaving = True }
+                    , MP.updatePost SavedPost d model.session.micropub
+                    )
 
                 Nothing ->
                     ( model, Cmd.none )
 
         SavedPost (Ok _) ->
-            ( { model | originalPost = model.post, diff = Nothing }, Cmd.none )
+            ( { model
+                | originalPost = model.post
+                , diff = Nothing
+                , isSaving = False
+              }
+            , Cmd.none
+            )
 
         SavedPost (Err _) ->
-            ( model, Cmd.none )
+            ( { model | isSaving = False }, Cmd.none )
 
         RevertPost ->
             ( revertPost model, Cmd.none )
@@ -177,11 +188,21 @@ editPost model item =
     let
         hasChanges =
             Maybe.withDefault False <| Maybe.map Diff.hasChanges model.diff
+
+        saveState =
+            if model.isSaving then
+                Button.Working
+
+            else if hasChanges then
+                Button.Enabled
+
+            else
+                Button.Disabled
     in
     Html.form
         [ class "w-full h-screen flex flex-col"
         , onSubmit
-            (if hasChanges then
+            (if saveState == Button.Enabled then
                 SavePost
 
              else
@@ -206,16 +227,7 @@ editPost model item =
                                 [ text url ]
                             ]
                 ]
-            , button
-                [ type_ "submit"
-                , class "px-3 py-2 mx-1 rounded"
-                , if hasChanges then
-                    class "font-bold bg-blue-dark text-white"
-
-                  else
-                    class "bg-grey-lightest text-grey"
-                ]
-                [ text "Save" ]
+            , Button.save saveState
             , button
                 [ type_ "button"
                 , onClick

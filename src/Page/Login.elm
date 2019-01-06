@@ -198,7 +198,9 @@ loggingInView : Model -> List (Html Message)
 loggingInView model =
     [ header []
         [ h1 [ class "text-orange-darkest font-light text-center" ]
-            [ text "Logging in..." ]
+            [ i [ class "fas fa-spinner fa-spin fa-sm mr-3 text-orange-light" ] []
+            , text "Logging in..."
+            ]
         ]
     ]
 
