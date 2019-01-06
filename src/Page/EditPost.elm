@@ -196,10 +196,11 @@ editPost model item =
 
                     Just url ->
                         span []
-                            [ strong [ class "text-orange-darkest" ] [ text "Permalink: " ]
+                            [ strong [ class "text-orange-darker" ]
+                                [ i [ class "fas fa-link mr-1" ] [] ]
                             , a
                                 [ href url
-                                , class "text-orange-dark"
+                                , class "text-orange-dark no-underline"
                                 , target "_blank"
                                 ]
                                 [ text url ]

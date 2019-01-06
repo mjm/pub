@@ -42,7 +42,7 @@ view msgs toMsg details =
     , body =
         [ div [ class "font-sans flex h-screen" ]
             [ nav [ class "flex flex-col w-1/4 xl:w-1/5 min-h-screen bg-orange-lightest shadow-lg z-30 pt-2 overflow-y-auto" ]
-                [ div [ class "flex flex-row text-xs mb-2 px-3 items-baseline" ]
+                [ div [ class "flex flex-row text-xs mb-3 px-3 items-baseline" ]
                     [ div [ class "flex-grow text-orange-dark" ]
                         [ text (friendlyMe details) ]
                     , button

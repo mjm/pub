@@ -121,22 +121,26 @@ view config (Model model) =
         ]
         (if List.isEmpty us then
             [ p [ class "my-auto text-center pointer-events-none text-sm uppercase font-semibold text-orange-dark" ]
-                [ text "Drop photos here" ]
+                [ i [ class "fas fa-images mr-1" ] []
+                , text "Drop photos here"
+                ]
             ]
 
          else
             [ h3 [ class "uppercase text-sm mb-2 text-orange-dark pointer-events-none" ]
-                [ text <| "Photos (" ++ String.fromInt (List.length us) ++ ")" ]
+                [ i [ class "fas fa-images mr-1" ] []
+                , text <| "Photos (" ++ String.fromInt (List.length us) ++ ")"
+                ]
             , p [ class "flex flex-row items-start overflow-hidden pointer-events-none" ] <|
                 Upload.taggedMap
                     (\tag u ->
                         div [ class "w-1/4 max-h-full pointer-events-auto relative" ]
                             [ button
-                                [ class "font-bold rounded-full bg-blue-dark text-white absolute pin-t pin-r m-2 w-6 h-6"
+                                [ class "font-bold rounded-full text-sm bg-blue-dark text-white absolute pin-t pin-r m-2 w-6 h-6"
                                 , type_ "button"
                                 , onClick ((config.toMsg << DeleteFile) tag)
                                 ]
-                                [ text "x" ]
+                                [ i [ class "fas fa-times" ] [] ]
                             , img [ src u ] []
                             ]
                     )
