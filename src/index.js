@@ -22,7 +22,11 @@ var app = Elm.Main.init({
 });
 
 app.ports.storePageData.subscribe(function(data) {
-  localStorage.setItem('pageData', JSON.stringify(data));
+  localStorage.setItem('pageData', JSON.stringify(data.pageData));
+
+  if (data.clearSession) {
+    localStorage.removeItem('session');
+  }
 });
 
 app.ports.storeSession.subscribe(function(data) {

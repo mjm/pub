@@ -4,6 +4,7 @@ module Session exposing
     , decoder
     , empty
     , encode
+    , getPageData
     , login
     , updatePageData
     , updatePages
@@ -58,6 +59,19 @@ login mp cfg sess =
 
         LoggedIn data ->
             LoggedIn { data | micropub = newMp, config = cfg }
+
+
+getPageData : Data -> Maybe MPH.Data
+getPageData session =
+    case session of
+        LoggingIn pd ->
+            Just pd
+
+        LoggedIn data ->
+            Just data.pageData
+
+        _ ->
+            Nothing
 
 
 updatePageData : MPH.Data -> Data -> Data

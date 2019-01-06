@@ -269,7 +269,7 @@ update message model =
 updatePageData : MPH.Data -> Model -> ( Model, Cmd Message )
 updatePageData pd model =
     ( updateSession (Session.updatePageData pd) model
-    , Ports.storePageData (MPH.encodeLocal pd)
+    , Ports.storePageData (E.object [ ( "pageData", MPH.encodeLocal pd ) ])
     )
 
 

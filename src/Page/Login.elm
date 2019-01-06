@@ -65,8 +65,8 @@ init flags =
 
 initCommand : String -> Maybe Auth.Callback -> Session.Data -> Cmd Message
 initCommand client callback session =
-    case session of
-        Session.LoggingIn pd ->
+    case Session.getPageData session of
+        Just pd ->
             case ( pd.tokenEndpoint, callback ) of
                 ( Just url, Just cb ) ->
                     Auth.authorizeToken GotAuthToken url client cb
@@ -74,7 +74,7 @@ initCommand client callback session =
                 _ ->
                     Cmd.none
 
-        _ ->
+        Nothing ->
             Cmd.none
 
 
@@ -108,7 +108,12 @@ update msg model =
                 Just endpoint ->
                     Cmd.batch
                         [ loadAuthPage model.rootUrl endpoint model.siteUrl
-                        , Ports.storePageData (MPH.encodeLocal pd)
+                        , Ports.storePageData
+                            (E.object
+                                [ ( "pageData", MPH.encodeLocal pd )
+                                , ( "clearSession", E.bool True )
+                                ]
+                            )
                         ]
             )
 
@@ -152,8 +157,8 @@ setMicropubSession : Model -> Auth.AuthorizedToken -> ( Model, Cmd Message )
 setMicropubSession model token =
     let
         micropub =
-            case model.session of
-                Session.LoggingIn pd ->
+            case Session.getPageData model.session of
+                Just pd ->
                     case pd.micropubEndpoint of
                         Just url ->
                             Just (MP.login url token)
