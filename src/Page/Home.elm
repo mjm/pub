@@ -56,7 +56,9 @@ view model =
                             [ class "text-sm font-bold bg-blue-dark text-white px-3 py-2 mx-2 rounded no-underline"
                             , href (Urls.newPost t)
                             ]
-                            [ text (MP.postTypeName t) ]
+                            [ i [ class ("mr-2 fas fa-" ++ postTypeIcon t) ] []
+                            , text (MP.postTypeName t)
+                            ]
                         ]
                 )
                 (MP.postTypes model.session.config)
@@ -65,3 +67,19 @@ view model =
     , session = model.session
     , selection = Skeleton.Empty
     }
+
+
+postTypeIcon : MP.PostType -> String
+postTypeIcon t =
+    case t of
+        MP.Note _ ->
+            "comment-alt"
+
+        MP.Article _ ->
+            "paragraph"
+
+        MP.Photo _ ->
+            "camera"
+
+        MP.Unknown _ _ ->
+            ""
