@@ -3,6 +3,10 @@
 @tailwind preflight;
 @tailwind components;
 
+body {
+  @apply bg-orange-lightest;
+}
+
 .preview-content a {
   @apply text-orange-dark;
 }
