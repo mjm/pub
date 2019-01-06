@@ -121,4 +121,5 @@ encodeLoggedIn data =
         [ ( "pageData", MPH.encodeLocal data.pageData )
         , ( "config", Micropub.encodeConfig data.config )
         , ( "micropub", Micropub.encodeSession data.micropub )
+        , ( "pages", E.list Page.encode data.pages )
         ]
