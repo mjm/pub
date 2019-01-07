@@ -17,6 +17,7 @@ import IndieAuth as Auth
 import Microformats
 import Micropub as MP
 import Micropub.Html as MPH
+import Micropub.Post as Post
 import Micropub.PostType as PostType exposing (PostType(..))
 import Session
 import Skeleton
@@ -77,7 +78,7 @@ update msg model =
 
         SavePost ->
             ( { model | isSaving = True }
-            , MP.createPost SavedPost model.post model.session.micropub
+            , Post.create SavedPost model.post model.session.micropub
             )
 
         SavedPost (Ok url) ->

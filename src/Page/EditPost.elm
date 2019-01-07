@@ -17,6 +17,7 @@ import Microformats
 import Micropub as MP
 import Micropub.Diff as Diff
 import Micropub.Html as MPH
+import Micropub.Post as Post
 import Session
 import Skeleton
 import View.Button as Button
@@ -46,7 +47,7 @@ init session url =
       , editor = Editor.create
       , photos = Photos.init session.micropub
       }
-    , MP.getPost GotPost url session.micropub
+    , Post.get GotPost url session.micropub
     )
 
 
@@ -93,7 +94,7 @@ update msg model =
             case model.diff of
                 Just d ->
                     ( { model | isSaving = True }
-                    , MP.updatePost SavedPost d model.session.micropub
+                    , Post.update SavedPost d model.session.micropub
                     )
 
                 Nothing ->
