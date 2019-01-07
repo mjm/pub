@@ -5,7 +5,7 @@ module Urls exposing
     , newPost
     )
 
-import Micropub
+import Micropub.PostType as PostType
 import Url.Builder as UB
 
 
@@ -19,9 +19,9 @@ editPost url =
     "/posts/edit" ++ UB.toQuery [ UB.string "url" url ]
 
 
-newPost : Micropub.PostType -> String
+newPost : PostType.PostType -> String
 newPost pt =
-    "/posts/new" ++ UB.toQuery [ UB.string "type" (Micropub.postTypeKey pt) ]
+    "/posts/new" ++ UB.toQuery [ UB.string "type" (PostType.key pt) ]
 
 
 editPage : String -> String

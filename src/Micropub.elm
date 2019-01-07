@@ -1,9 +1,7 @@
 module Micropub exposing
     ( Session, login, encodeSession, sessionDecoder
-    , Config, getConfig, encodeConfig, configDecoder
-    , PostType(..), postTypes, getPostType, postTypeKey, postTypeName
+    , Config, getConfig, encodeConfig, configDecoder, postTypes, getPostType
     , getPost, createPost, updatePost
-    , expectCreated
     )
 
 {-| This module provides support for interacting the Micropub API on sites that
@@ -20,33 +18,25 @@ updating posts.
 
 # Configuration
 
-@docs Config, getConfig, encodeConfig, configDecoder
-
-
-# Post Types
-
-@docs PostType, postTypes, getPostType, postTypeKey, postTypeName
+@docs Config, getConfig, encodeConfig, configDecoder, postTypes, getPostType
 
 
 # Posts
 
 @docs getPost, createPost, updatePost
 
-
-# Utilities
-
-@docs expectCreated
-
 -}
 
 import Dict
 import Http
+import Http.Util exposing (expectCreated)
 import IndieAuth as Auth
 import Json.Decode as D
 import Json.Decode.Pipeline exposing (optional, required)
 import Json.Encode as E
 import Microformats
 import Micropub.Diff as Diff
+import Micropub.PostType as PostType exposing (PostType(..))
 import Url.Builder as UB
 
 
@@ -92,32 +82,6 @@ type alias Config =
     }
 
 
-{-| Represents a type of post that is supported by a Micropub endpoint.
-
-There is an extension to Micropub that includes this information in the config
-response. It can be used by clients to only allow creating post types that the
-server claims to support.
-
-All values include a string for a name, as the server can choose to assign its
-own name to a well-known post type. A client should use this name in UI. For
-instance, the "note" type could be named "Status Update" or "Tweet."
-
--}
-type PostType
-    = Note String
-    | Article String
-    | Photo String
-    | Unknown String String
-
-
-allPostTypes : List PostType
-allPostTypes =
-    [ Note "Note"
-    , Article "Article"
-    , Photo "Photo"
-    ]
-
-
 {-| Returns a list of post types supported by the Micropub configuration.
 
 If the configuration doesn't include a list of post types, this includes all
@@ -126,49 +90,7 @@ of the types we know of, with default names.
 -}
 postTypes : Config -> List PostType
 postTypes cfg =
-    Maybe.withDefault allPostTypes cfg.postTypes
-
-
-{-| Returns the displayable name of a post type.
--}
-postTypeName : PostType -> String
-postTypeName t =
-    case t of
-        Note n ->
-            n
-
-        Article n ->
-            n
-
-        Photo n ->
-            n
-
-        Unknown n _ ->
-            n
-
-
-{-| Returns the canonical type name of the post type.
-
-This should be a name that is [documented in the IndieWeb wiki][types], such
-that it has shared meaning across various clients and servers.
-
-[types]: https://indieweb.org/Category:PostType
-
--}
-postTypeKey : PostType -> String
-postTypeKey t =
-    case t of
-        Note _ ->
-            "note"
-
-        Article _ ->
-            "article"
-
-        Photo _ ->
-            "photo"
-
-        Unknown _ type_ ->
-            type_
+    Maybe.withDefault PostType.all cfg.postTypes
 
 
 {-| Gets the PostType for type in the configuration that matches the given
@@ -186,7 +108,7 @@ getPostType type_ cfg =
     in
     case type_ of
         Just n ->
-            List.head <| List.filter (\pt -> postTypeKey pt == n) types
+            List.head <| List.filter (\pt -> PostType.key pt == n) types
 
         Nothing ->
             List.head types
@@ -198,28 +120,7 @@ configDecoder : D.Decoder Config
 configDecoder =
     D.succeed Config
         |> optional "media-endpoint" (D.maybe D.string) Nothing
-        |> optional "post-types" (D.maybe (D.list postTypeDecoder)) Nothing
-
-
-postTypeDecoder : D.Decoder PostType
-postTypeDecoder =
-    D.succeed
-        (\name type_ ->
-            case type_ of
-                "note" ->
-                    Note name
-
-                "article" ->
-                    Article name
-
-                "photo" ->
-                    Photo name
-
-                _ ->
-                    Unknown name type_
-        )
-        |> required "name" D.string
-        |> required "type" D.string
+        |> optional "post-types" (D.maybe (D.list PostType.decoder)) Nothing
 
 
 {-| Encode a Micropub configuration to JSON.
@@ -233,34 +134,11 @@ encodeConfig : Config -> E.Value
 encodeConfig cfg =
     E.object
         [ ( "media-endpoint", Maybe.withDefault E.null (Maybe.map E.string cfg.mediaEndpoint) )
-        , ( "post-types", Maybe.withDefault E.null (Maybe.map encodePostTypes cfg.postTypes) )
+        , ( "post-types"
+          , Maybe.withDefault E.null
+                (Maybe.map (E.list PostType.encode) cfg.postTypes)
+          )
         ]
-
-
-encodePostTypes : List PostType -> E.Value
-encodePostTypes =
-    E.list
-        (\t ->
-            let
-                ( name, type_ ) =
-                    case t of
-                        Note n ->
-                            ( n, "note" )
-
-                        Article n ->
-                            ( n, "article" )
-
-                        Photo n ->
-                            ( n, "photo" )
-
-                        Unknown n x ->
-                            ( n, x )
-            in
-            E.object
-                [ ( "name", E.string name )
-                , ( "type", E.string type_ )
-                ]
-        )
 
 
 {-| Decode a Micropub session from JSON.
@@ -380,39 +258,3 @@ updatePost msg diff session =
         , timeout = Nothing
         , tracker = Nothing
         }
-
-
-{-| Expect a 201 Created response from an HTTP request.
-
-Returns the value of the `Location` header from the response.
-
--}
-expectCreated : (Result Http.Error String -> msg) -> Http.Expect msg
-expectCreated toMsg =
-    Http.expectStringResponse toMsg <|
-        \response ->
-            case response of
-                Http.BadUrl_ url ->
-                    Err (Http.BadUrl url)
-
-                Http.Timeout_ ->
-                    Err Http.Timeout
-
-                Http.NetworkError_ ->
-                    Err Http.NetworkError
-
-                Http.BadStatus_ metadata body ->
-                    Err (Http.BadStatus metadata.statusCode)
-
-                Http.GoodStatus_ metadata body ->
-                    case metadata.statusCode of
-                        201 ->
-                            case Dict.get "location" metadata.headers of
-                                Just url ->
-                                    Ok url
-
-                                Nothing ->
-                                    Err (Http.BadBody "No Location header found")
-
-                        _ ->
-                            Err (Http.BadStatus metadata.statusCode)

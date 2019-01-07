@@ -17,6 +17,7 @@ import IndieAuth as Auth
 import Microformats
 import Micropub as MP
 import Micropub.Html as MPH
+import Micropub.PostType as PostType exposing (PostType(..))
 import Session
 import Skeleton
 import Urls
@@ -28,14 +29,14 @@ type alias Model =
     { key : Nav.Key
     , session : Session.LoggedInData
     , post : Microformats.Item
-    , postType : MP.PostType
+    , postType : PostType
     , isSaving : Bool
     , editor : Editor.State
     , photos : Photos.Model
     }
 
 
-init : Nav.Key -> Session.LoggedInData -> MP.PostType -> ( Model, Cmd Message )
+init : Nav.Key -> Session.LoggedInData -> PostType -> ( Model, Cmd Message )
 init key session postType =
     ( { key = key
       , session = session
@@ -116,25 +117,25 @@ type Field
     | Photo
 
 
-supportedFields : MP.PostType -> List Field
+supportedFields : PostType -> List Field
 supportedFields t =
     case t of
-        MP.Note _ ->
+        Note _ ->
             [ Content ]
 
-        MP.Article _ ->
+        Article _ ->
             [ Name, Content ]
 
-        MP.Photo _ ->
+        PostType.Photo _ ->
             [ Content, Photo ]
 
-        MP.Unknown _ _ ->
+        Unknown _ _ ->
             []
 
 
 view : Model -> Skeleton.Details Message
 view model =
-    { title = "New " ++ MP.postTypeName model.postType
+    { title = "New " ++ PostType.name model.postType
     , body = [ editPost model ]
     , session = model.session
     , selection = Skeleton.Empty
@@ -175,7 +176,7 @@ editPost model =
         ]
         [ div [ class "flex flex-none flex-row items-baseline" ]
             [ div [ class "flex-grow" ]
-                [ h3 [] [ text ("New " ++ MP.postTypeName model.postType) ]
+                [ h3 [] [ text ("New " ++ PostType.name model.postType) ]
                 ]
             , Button.save saveState
             ]

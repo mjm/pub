@@ -15,6 +15,7 @@ import IndieAuth as Auth
 import Microformats
 import Micropub as MP
 import Micropub.Html as MPH
+import Micropub.PostType as PostType exposing (PostType(..))
 import Session
 import Skeleton
 import Urls
@@ -57,7 +58,7 @@ view model =
                             , href (Urls.newPost t)
                             ]
                             [ i [ class ("mr-2 fas fa-" ++ postTypeIcon t) ] []
-                            , text (MP.postTypeName t)
+                            , text (PostType.name t)
                             ]
                         ]
                 )
@@ -69,17 +70,17 @@ view model =
     }
 
 
-postTypeIcon : MP.PostType -> String
+postTypeIcon : PostType -> String
 postTypeIcon t =
     case t of
-        MP.Note _ ->
+        Note _ ->
             "comment-alt"
 
-        MP.Article _ ->
+        Article _ ->
             "paragraph"
 
-        MP.Photo _ ->
+        Photo _ ->
             "camera"
 
-        MP.Unknown _ _ ->
+        Unknown _ _ ->
             ""

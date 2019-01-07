@@ -12,6 +12,7 @@ endpoint.
 
 import File exposing (File)
 import Http
+import Http.Util exposing (expectCreated)
 import IndieAuth as Auth
 import Micropub as MP
 
@@ -39,7 +40,7 @@ upload toMsg file session =
                 , body =
                     Http.multipartBody
                         [ Http.filePart "file" file ]
-                , expect = MP.expectCreated toMsg
+                , expect = expectCreated toMsg
                 , timeout = Nothing
                 , tracker = Nothing
                 }

@@ -11,6 +11,7 @@ import Json.Decode as D
 import Json.Encode as E
 import Micropub as MP
 import Micropub.Html as MPH
+import Micropub.PostType as PostType exposing (PostType)
 import Page.EditPage as EditPage
 import Page.EditPost as EditPost
 import Page.Home as Home
