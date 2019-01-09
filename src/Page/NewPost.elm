@@ -24,6 +24,7 @@ import Skeleton
 import Urls
 import View.Button as Button
 import View.Photos as Photos
+import View.PostForm as PostForm
 
 
 type alias Model =
@@ -112,28 +113,6 @@ updatePhotos msg model =
     )
 
 
-type Field
-    = Name
-    | Content
-    | Photo
-
-
-supportedFields : PostType -> List Field
-supportedFields t =
-    case t of
-        Note _ ->
-            [ Content ]
-
-        Article _ ->
-            [ Name, Content ]
-
-        PostType.Photo _ ->
-            [ Content, Photo ]
-
-        Unknown _ _ ->
-            []
-
-
 view : Model -> Skeleton.Details Message
 view model =
     { title = "New " ++ PostType.name model.postType
@@ -158,12 +137,6 @@ editPost model =
 
             else
                 Button.Disabled
-
-        fields =
-            supportedFields model.postType
-
-        displayField f =
-            List.member f fields
     in
     Html.form
         [ class "w-full h-screen flex flex-col"
@@ -181,39 +154,13 @@ editPost model =
                 ]
             , Button.save saveState
             ]
-        , if displayField Name then
-            div [ class "flex-none py-2 border-orange border-b" ]
-                [ input
-                    [ class "px-2 text-xl appearance-none w-full bg-transparent border-none focus:outline-none"
-                    , placeholder "Untitled"
-                    , onInput SetName
-                    , value (Maybe.withDefault "" (Microformats.string "name" model.post))
-                    ]
-                    []
-                ]
-
-          else
-            text ""
-        , if displayField Content then
-            div [ class "flex flex-col flex-grow mt-3" ]
-                [ Editor.view
-                    (Maybe.withDefault "" (Microformats.string "content" model.post))
-                    { onInput = SetContent
-                    , onStateChange = SetEditorState
-                    , attrs = [ class "w-full flex-grow" ]
-                    }
-                    model.editor
-                ]
-
-          else
-            text ""
-        , if displayField Photo then
-            Photos.view
-                { attrs = []
-                , toMsg = PhotosMsg
-                }
-                model.photos
-
-          else
-            text ""
+        , PostForm.nameField SetName model.postType model.post
+        , PostForm.contentField
+            { onInput = SetContent
+            , onStateChange = SetEditorState
+            }
+            model.postType
+            model.post
+            model.editor
+        , PostForm.photoField PhotosMsg model.postType model.photos
         ]

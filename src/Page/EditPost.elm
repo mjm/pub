@@ -18,10 +18,12 @@ import Micropub as MP
 import Micropub.Diff as Diff
 import Micropub.Html as MPH
 import Micropub.Post as Post
+import Micropub.PostType as PostType exposing (PostType)
 import Session
 import Skeleton
 import View.Button as Button
 import View.Photos as Photos
+import View.PostForm as PostForm
 
 
 type alias Model =
@@ -29,6 +31,7 @@ type alias Model =
     , url : String
     , originalPost : Maybe Microformats.Item
     , post : Maybe Microformats.Item
+    , postType : Maybe PostType
     , diff : Maybe Diff.Diff
     , isSaving : Bool
     , editor : Editor.State
@@ -42,6 +45,7 @@ init session url =
       , url = url
       , originalPost = Nothing
       , post = Nothing
+      , postType = Nothing
       , diff = Nothing
       , isSaving = False
       , editor = Editor.create
@@ -73,6 +77,7 @@ update msg model =
             ( { model
                 | originalPost = Just post
                 , post = Just post
+                , postType = Just (Post.inferType model.session.config post)
                 , photos = Photos.setUrls (existingPhotos post) model.photos
               }
             , Cmd.none
@@ -172,20 +177,20 @@ view : Model -> Skeleton.Details Message
 view model =
     { title = "Edit Post"
     , body =
-        [ case model.post of
-            Nothing ->
-                p [] [ text "Loading post to edit..." ]
+        [ case ( model.post, model.postType ) of
+            ( Just post, Just t ) ->
+                editPost model post t
 
-            Just post ->
-                editPost model post
+            _ ->
+                p [] [ text "Loading post to edit..." ]
         ]
     , session = model.session
     , selection = Skeleton.Post model.url
     }
 
 
-editPost : Model -> Microformats.Item -> Html Message
-editPost model item =
+editPost : Model -> Microformats.Item -> PostType -> Html Message
+editPost model item t =
     let
         hasChanges =
             Maybe.withDefault False <| Maybe.map Diff.hasChanges model.diff
@@ -247,27 +252,13 @@ editPost model item =
                 ]
                 [ text "Revert" ]
             ]
-        , div [ class "flex-none py-2 border-orange border-b" ]
-            [ input
-                [ class "px-2 text-xl appearance-none w-full bg-transparent border-none focus:outline-none"
-                , placeholder "Untitled"
-                , onInput SetName
-                , value (Maybe.withDefault "" (Microformats.string "name" item))
-                ]
-                []
-            ]
-        , div [ class "flex flex-col flex-grow mt-3" ]
-            [ Editor.view
-                (Maybe.withDefault "" (Microformats.string "content" item))
-                { onInput = SetContent
-                , onStateChange = SetEditorState
-                , attrs = [ class "w-full flex-grow" ]
-                }
-                model.editor
-            ]
-        , Photos.view
-            { attrs = []
-            , toMsg = PhotosMsg
+        , PostForm.nameField SetName t item
+        , PostForm.contentField
+            { onInput = SetContent
+            , onStateChange = SetEditorState
             }
-            model.photos
+            t
+            item
+            model.editor
+        , PostForm.photoField PhotosMsg t model.photos
         ]

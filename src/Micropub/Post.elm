@@ -1,4 +1,4 @@
-module Micropub.Post exposing (create, get, update)
+module Micropub.Post exposing (create, get, inferType, update)
 
 import Http
 import Http.Util exposing (expectCreated)
@@ -6,6 +6,7 @@ import IndieAuth as Auth
 import Microformats
 import Micropub as MP
 import Micropub.Diff as Diff
+import Micropub.PostType as PostType exposing (PostType(..))
 import Url.Builder as UB
 
 
@@ -79,3 +80,30 @@ update msg diff session =
         , timeout = Nothing
         , tracker = Nothing
         }
+
+
+inferType : MP.Config -> Microformats.Item -> PostType
+inferType config item =
+    possibleTypeKeys item
+        |> List.filterMap (\x -> MP.getPostType (Just x) config)
+        |> List.head
+        |> Maybe.withDefault (Article "Article")
+
+
+possibleTypeKeys : Microformats.Item -> List String
+possibleTypeKeys item =
+    let
+        photos =
+            Maybe.withDefault [] (Microformats.strings "photo" item)
+
+        name =
+            Maybe.withDefault "" (Microformats.string "name" item)
+
+        checks =
+            [ ( "photo", not (List.isEmpty photos) )
+            , ( "note", String.isEmpty name )
+            ]
+    in
+    checks
+        |> List.filter Tuple.second
+        |> List.map Tuple.first
