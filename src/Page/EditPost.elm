@@ -234,23 +234,7 @@ editPost model item t =
                             ]
                 ]
             , Button.save saveState
-            , button
-                [ type_ "button"
-                , onClick
-                    (if hasChanges then
-                        RevertPost
-
-                     else
-                        NoOp
-                    )
-                , class "px-3 py-2 mx-1 rounded"
-                , if hasChanges then
-                    class "font-semibold bg-grey-lighter text-grey-darker"
-
-                  else
-                    class "bg-grey-lightest text-grey"
-                ]
-                [ text "Revert" ]
+            , Button.revert RevertPost hasChanges
             ]
         , PostForm.nameField SetName t item
         , PostForm.contentField

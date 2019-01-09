@@ -175,23 +175,7 @@ editPage model page =
                     [ text url ]
                 ]
             , Button.save saveState
-            , button
-                [ type_ "button"
-                , onClick
-                    (if changed then
-                        RevertPage
-
-                     else
-                        NoOp
-                    )
-                , class "px-3 py-2 mx-1 rounded"
-                , if changed then
-                    class "font-semibold bg-grey-lighter text-grey-darker"
-
-                  else
-                    class "bg-grey-lightest text-grey"
-                ]
-                [ text "Revert" ]
+            , Button.revert RevertPage changed
             ]
         , div [ class "flex-none py-2 border-orange border-b" ]
             [ input

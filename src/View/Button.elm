@@ -1,4 +1,4 @@
-module View.Button exposing (State(..), save)
+module View.Button exposing (State(..), revert, save)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -33,3 +33,27 @@ save state =
         [ i [ class ("fas mr-1 " ++ iconClass) ] []
         , text "Save"
         ]
+
+
+revert : msg -> Bool -> Html msg
+revert msg enabled =
+    let
+        extraAttrs =
+            if enabled then
+                [ onClick msg ]
+
+            else
+                []
+    in
+    button
+        ([ type_ "button"
+         , class "px-3 py-2 mx-1 rounded"
+         , if enabled then
+            class "font-semibold bg-grey-lighter text-grey-darker"
+
+           else
+            class "bg-grey-lightest text-grey"
+         ]
+            ++ extraAttrs
+        )
+        [ text "Revert" ]
