@@ -24,6 +24,7 @@ import Skeleton
 import View.Button as Button
 import View.Photos as Photos
 import View.PostForm as PostForm
+import View.PostType exposing (postTypeIcon)
 
 
 type alias Model =
@@ -58,6 +59,7 @@ init session url =
 type Message
     = NoOp
     | GotPost (Result Http.Error Microformats.Item)
+    | SetPostType String
     | SetName String
     | SetContent String
     | SetEditorState Editor.State
@@ -85,6 +87,14 @@ update msg model =
 
         GotPost (Err _) ->
             ( model, Cmd.none )
+
+        SetPostType key ->
+            case MP.getPostType (Just key) model.session.config of
+                Just t ->
+                    ( { model | postType = Just t }, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none )
 
         SetName name ->
             ( updatePost (Microformats.setString "name" name) model, Cmd.none )
@@ -216,7 +226,30 @@ editPost model item t =
             )
         ]
         [ div [ class "flex flex-none flex-row items-baseline" ]
-            [ div [ class "flex-grow" ]
+            [ div [ class "relative w-12 mr-3" ]
+                [ div [ class "absolute w-full pt-px flex flex-row items-baseline justify-between pointer-events-none" ]
+                    [ div [ class "mt-1 ml-2 pointer-events-none text-orange-darker" ]
+                        [ i [ class ("fas fa-" ++ postTypeIcon t) ] [] ]
+                    , div [ class "mr-2 pointer-events-none text-orange-darker" ]
+                        [ i [ class "fas fa-angle-down" ] [] ]
+                    ]
+                , select
+                    [ onInput SetPostType
+                    , class "w-full py-1 bg-orange-lighter text-orange-lighter appearance-none focus:outline-none rounded"
+                    ]
+                    (List.map
+                        (\type_ ->
+                            option
+                                [ value (PostType.key type_)
+                                , selected (PostType.key type_ == PostType.key t)
+                                , class "bg-white text-black text-lg"
+                                ]
+                                [ text (PostType.name type_) ]
+                        )
+                        (MP.postTypes model.session.config)
+                    )
+                ]
+            , div [ class "flex-grow" ]
                 [ case Microformats.string "url" item of
                     Nothing ->
                         text ""

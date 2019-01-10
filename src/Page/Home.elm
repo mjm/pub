@@ -19,6 +19,7 @@ import Micropub.PostType as PostType exposing (PostType(..))
 import Session
 import Skeleton
 import Urls
+import View.PostType exposing (postTypeIcon)
 
 
 type alias Model =
@@ -68,19 +69,3 @@ view model =
     , session = model.session
     , selection = Skeleton.Empty
     }
-
-
-postTypeIcon : PostType -> String
-postTypeIcon t =
-    case t of
-        Note _ ->
-            "comment-alt"
-
-        Article _ ->
-            "paragraph"
-
-        Photo _ ->
-            "camera"
-
-        Unknown _ _ ->
-            ""
