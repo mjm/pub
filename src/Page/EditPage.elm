@@ -207,6 +207,7 @@ editPage model page =
                 { onInput = SetContent
                 , onStateChange = SetEditorState
                 , attrs = [ class "w-full flex-grow" ]
+                , showCharacterCount = False
                 }
                 model.editor
             ]

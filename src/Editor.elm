@@ -10,6 +10,7 @@ type alias Config msg =
     { onInput : String -> msg
     , onStateChange : State -> msg
     , attrs : List (Attribute msg)
+    , showCharacterCount : Bool
     }
 
 
@@ -30,9 +31,16 @@ view input config state =
             Markdown.defaultOptions
     in
     div (config.attrs ++ [ class "flex flex-col" ])
-        [ ul [ class "list-reset flex flex-none border-b" ]
+        [ ul [ class "list-reset flex flex-row flex-none border-b" ]
             [ tabItem config.onStateChange state Editing "Write"
             , tabItem config.onStateChange state Previewing "Preview"
+            , div [ class "flex-grow" ] []
+            , if config.showCharacterCount && state == Editing then
+                div [ class "flex-none mt-2 mr-2 text-sm text-orange-dark" ]
+                    [ text (String.fromInt (String.length input) ++ "c") ]
+
+              else
+                text ""
             ]
         , case state of
             Editing ->

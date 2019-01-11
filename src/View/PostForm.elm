@@ -36,6 +36,16 @@ displayField t f =
     List.member f (supportedFields t)
 
 
+isNote : PostType -> Bool
+isNote t =
+    case t of
+        Note _ ->
+            True
+
+        _ ->
+            False
+
+
 nameField : (String -> msg) -> PostType -> Microformats.Item -> Html msg
 nameField msg pt item =
     if displayField pt Name then
@@ -69,6 +79,7 @@ contentField cfg pt item editor =
                 { onInput = cfg.onInput
                 , onStateChange = cfg.onStateChange
                 , attrs = [ class "w-full flex-grow" ]
+                , showCharacterCount = isNote pt
                 }
                 editor
             ]
