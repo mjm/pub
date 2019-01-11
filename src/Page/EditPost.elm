@@ -21,6 +21,7 @@ import Micropub.Post as Post
 import Micropub.PostType as PostType exposing (PostType)
 import Session
 import Skeleton
+import View.Alert as Alert exposing (Alert, Alerts)
 import View.Button as Button
 import View.Photos as Photos
 import View.PostForm as PostForm
@@ -29,6 +30,7 @@ import View.PostType exposing (postTypeIcon)
 
 type alias Model =
     { session : Session.LoggedInData
+    , alerts : Alerts Message
     , url : String
     , originalPost : Maybe Microformats.Item
     , post : Maybe Microformats.Item
@@ -43,6 +45,7 @@ type alias Model =
 init : Session.LoggedInData -> String -> ( Model, Cmd Message )
 init session url =
     ( { session = session
+      , alerts = Alert.empty DismissAlert
       , url = url
       , originalPost = Nothing
       , post = Nothing
@@ -58,6 +61,7 @@ init session url =
 
 type Message
     = NoOp
+    | DismissAlert Alert
     | GotPost (Result Http.Error Microformats.Item)
     | SetPostType String
     | SetName String
@@ -75,6 +79,9 @@ update msg model =
         NoOp ->
             ( model, Cmd.none )
 
+        DismissAlert alert ->
+            ( { model | alerts = Alert.dismiss alert model.alerts }, Cmd.none )
+
         GotPost (Ok post) ->
             ( { model
                 | originalPost = Just post
@@ -85,8 +92,10 @@ update msg model =
             , Cmd.none
             )
 
-        GotPost (Err _) ->
-            ( model, Cmd.none )
+        GotPost (Err err) ->
+            ( { model | alerts = Alert.append (Alert.fromHttpError err) model.alerts }
+            , Cmd.none
+            )
 
         SetPostType key ->
             case MP.getPostType (Just key) model.session.config of
@@ -124,8 +133,13 @@ update msg model =
             , Cmd.none
             )
 
-        SavedPost (Err _) ->
-            ( { model | isSaving = False }, Cmd.none )
+        SavedPost (Err err) ->
+            ( { model
+                | isSaving = False
+                , alerts = Alert.append (Alert.fromHttpError err) model.alerts
+              }
+            , Cmd.none
+            )
 
         RevertPost ->
             ( revertPost model, Cmd.none )
@@ -196,6 +210,7 @@ view model =
         ]
     , session = model.session
     , selection = Skeleton.Post model.url
+    , alerts = model.alerts
     }
 
 

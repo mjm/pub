@@ -22,6 +22,7 @@ import Micropub.PostType as PostType exposing (PostType(..))
 import Session
 import Skeleton
 import Urls
+import View.Alert as Alert exposing (Alert, Alerts)
 import View.Button as Button
 import View.Photos as Photos
 import View.PostForm as PostForm
@@ -30,6 +31,7 @@ import View.PostForm as PostForm
 type alias Model =
     { key : Nav.Key
     , session : Session.LoggedInData
+    , alerts : Alerts Message
     , post : Microformats.Item
     , postType : PostType
     , isSaving : Bool
@@ -41,6 +43,7 @@ type alias Model =
 init : Nav.Key -> Session.LoggedInData -> PostType -> ( Model, Cmd Message )
 init key session postType =
     ( { key = key
+      , alerts = Alert.empty DismissAlert
       , session = session
       , post = Microformats.createEntry
       , postType = postType
@@ -54,6 +57,7 @@ init key session postType =
 
 type Message
     = NoOp
+    | DismissAlert Alert
     | SetName String
     | SetContent String
     | SetEditorState Editor.State
@@ -67,6 +71,9 @@ update msg model =
     case msg of
         NoOp ->
             ( model, Cmd.none )
+
+        DismissAlert alert ->
+            ( { model | alerts = Alert.dismiss alert model.alerts }, Cmd.none )
 
         SetName name ->
             ( updatePost (Microformats.setString "name" name) model, Cmd.none )
@@ -87,8 +94,13 @@ update msg model =
             , Nav.pushUrl model.key (Urls.editPost url)
             )
 
-        SavedPost (Err _) ->
-            ( { model | isSaving = False }, Cmd.none )
+        SavedPost (Err err) ->
+            ( { model
+                | isSaving = False
+                , alerts = Alert.append (Alert.fromHttpError err) model.alerts
+              }
+            , Cmd.none
+            )
 
         PhotosMsg m ->
             updatePhotos m model
@@ -119,6 +131,7 @@ view model =
     , body = [ editPost model ]
     , session = model.session
     , selection = Skeleton.Empty
+    , alerts = model.alerts
     }
 
 

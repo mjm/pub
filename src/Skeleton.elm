@@ -13,6 +13,7 @@ import Microformats
 import Session
 import Url.Builder as UB
 import Urls
+import View.Alert as Alert exposing (Alerts)
 
 
 type alias Details msg =
@@ -20,6 +21,7 @@ type alias Details msg =
     , body : List (Html msg)
     , session : Session.LoggedInData
     , selection : Selection
+    , alerts : Alerts msg
     }
 
 
@@ -41,7 +43,8 @@ view msgs toMsg details =
     { title = details.title ++ " - Pub"
     , body =
         [ div [ class "font-sans flex h-screen" ]
-            [ nav [ class "flex flex-col w-1/4 xl:w-1/5 min-h-screen bg-orange-lightest shadow-lg z-30 pt-2 overflow-y-auto" ]
+            [ Html.map toMsg <| Alert.view details.alerts
+            , nav [ class "flex flex-col w-1/4 xl:w-1/5 min-h-screen bg-orange-lightest shadow-lg z-30 pt-2 overflow-y-auto" ]
                 [ div [ class "flex flex-row text-xs mb-3 px-3 items-baseline" ]
                     [ div [ class "flex-grow text-orange-dark" ]
                         [ text (friendlyMe details) ]

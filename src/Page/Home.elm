@@ -19,6 +19,7 @@ import Micropub.PostType as PostType exposing (PostType(..))
 import Session
 import Skeleton
 import Urls
+import View.Alert as Alert
 import View.PostType exposing (postTypeIcon)
 
 
@@ -29,9 +30,7 @@ type alias Model =
 
 init : Session.LoggedInData -> ( Model, Cmd Message )
 init session =
-    ( { session = session }
-    , Cmd.none
-    )
+    ( { session = session }, Cmd.none )
 
 
 type Message
@@ -68,4 +67,5 @@ view model =
         ]
     , session = model.session
     , selection = Skeleton.Empty
+    , alerts = Alert.empty (\_ -> NoOp)
     }

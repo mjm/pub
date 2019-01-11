@@ -16,11 +16,13 @@ import Http
 import Micropub.Html as MPH
 import Session
 import Skeleton
+import View.Alert as Alert exposing (Alert, Alerts)
 import View.Button as Button
 
 
 type alias Model =
     { session : Session.LoggedInData
+    , alerts : Alerts Message
     , path : String
     , originalPage : Maybe Page.Page
     , page : Maybe Page.Page
@@ -32,6 +34,7 @@ type alias Model =
 init : Session.LoggedInData -> String -> ( Model, Cmd Message )
 init session path =
     ( { session = session
+      , alerts = Alert.empty DismissAlert
       , path = path
       , originalPage = Nothing
       , page = Nothing
@@ -54,6 +57,7 @@ hasChanges model =
 
 type Message
     = NoOp
+    | DismissAlert Alert
     | GotPage (Result Http.Error Page.Page)
     | SetName String
     | SetContent String
@@ -69,11 +73,16 @@ update msg model =
         NoOp ->
             ( model, Cmd.none )
 
+        DismissAlert alert ->
+            ( { model | alerts = Alert.dismiss alert model.alerts }, Cmd.none )
+
         GotPage (Ok page) ->
             ( { model | originalPage = Just page, page = Just page }, Cmd.none )
 
-        GotPage (Err _) ->
-            ( model, Cmd.none )
+        GotPage (Err err) ->
+            ( { model | alerts = Alert.append (Alert.fromHttpError err) model.alerts }
+            , Cmd.none
+            )
 
         SetName name ->
             ( updatePage (\p -> { p | name = name }) model, Cmd.none )
@@ -97,8 +106,13 @@ update msg model =
         SavedPage (Ok _) ->
             ( { model | originalPage = model.page, isSaving = False }, Cmd.none )
 
-        SavedPage (Err _) ->
-            ( { model | isSaving = False }, Cmd.none )
+        SavedPage (Err err) ->
+            ( { model
+                | isSaving = False
+                , alerts = Alert.append (Alert.fromHttpError err) model.alerts
+              }
+            , Cmd.none
+            )
 
         RevertPage ->
             ( { model | page = model.originalPage }, Cmd.none )
@@ -131,6 +145,7 @@ view model =
         ]
     , session = model.session
     , selection = Skeleton.Page model.path
+    , alerts = model.alerts
     }
 
 
