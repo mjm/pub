@@ -30,7 +30,7 @@ view input config state =
         opts =
             Markdown.defaultOptions
     in
-    div (config.attrs ++ [ class "flex flex-col" ])
+    div (config.attrs ++ [ class "flex flex-col min-h-0" ])
         [ ul [ class "list-reset flex flex-row flex-none border-b" ]
             [ tabItem config.onStateChange state Editing "Write"
             , tabItem config.onStateChange state Previewing "Preview"

@@ -73,7 +73,7 @@ contentField :
     -> Html msg
 contentField cfg pt item editor =
     if displayField pt Content then
-        div [ class "flex flex-col flex-grow mt-3" ]
+        div [ class "flex flex-col flex-grow mt-3 min-h-0" ]
             [ Editor.view
                 (Maybe.withDefault "" (Microformats.string "content" item))
                 { onInput = cfg.onInput

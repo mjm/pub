@@ -169,7 +169,7 @@ editPage model page =
             model.session.micropub.token.me ++ Page.shortPath page
     in
     Html.form
-        [ class "w-full h-screen flex flex-col"
+        [ class "w-full h-screen min-h-0 flex flex-col"
         , onSubmit
             (if saveState == Button.Enabled then
                 SavePage
@@ -201,7 +201,7 @@ editPage model page =
                 ]
                 []
             ]
-        , div [ class "flex flex-col flex-grow mt-3" ]
+        , div [ class "flex flex-col flex-grow mt-3 min-h-0" ]
             [ Editor.view
                 page.content
                 { onInput = SetContent

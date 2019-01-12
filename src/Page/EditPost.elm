@@ -231,7 +231,7 @@ editPost model item t =
                 Button.Disabled
     in
     Html.form
-        [ class "w-full h-screen flex flex-col"
+        [ class "w-full h-screen flex flex-col min-h-0"
         , onSubmit
             (if saveState == Button.Enabled then
                 SavePost
