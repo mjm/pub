@@ -45,7 +45,7 @@ view msgs toMsg details =
         [ div [ class "font-sans flex h-screen" ]
             [ Html.map toMsg <| Alert.view details.alerts
             , nav [ class "flex flex-col w-1/4 xl:w-1/5 min-h-screen bg-orange-lightest shadow-lg z-30 pt-2 overflow-y-auto" ]
-                [ div [ class "flex flex-row text-xs mb-3 px-3 items-baseline" ]
+                [ div [ class "flex flex-row flex-no-shrink text-xs mb-3 px-3 items-baseline" ]
                     [ div [ class "flex-grow text-orange-dark" ]
                         [ text (friendlyMe details) ]
                     , button
@@ -54,7 +54,7 @@ view msgs toMsg details =
                         ]
                         [ text "Logout" ]
                     ]
-                , div [ class "flex flex-row items-baseline" ]
+                , div [ class "flex flex-row flex-no-shrink items-baseline" ]
                     [ navHeader "Pages"
                     , button
                         [ class "text-orange px-3"
@@ -64,7 +64,7 @@ view msgs toMsg details =
                     ]
                 , div [ class "flex-row" ]
                     [ sidebarPages details ]
-                , div [ class "flex flex-row items-baseline" ]
+                , div [ class "flex flex-row flex-no-shrink items-baseline" ]
                     [ navHeader "Posts"
                     , button
                         [ class "text-orange px-3"
@@ -74,7 +74,7 @@ view msgs toMsg details =
                     ]
                 , div [ class "flex-row" ]
                     [ sidebarPosts details ]
-                , div [ class "flex-row" ]
+                , div [ class "flex-row flex-no-shrink" ]
                     [ navHeader "Templates" ]
                 , div [ class "text-orange-darkest m-3 text-sm" ] [ text "No templates" ]
                 ]
