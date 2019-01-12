@@ -138,7 +138,7 @@ view model =
     , body =
         [ case model.page of
             Nothing ->
-                p [] [ text "Loading page to edit..." ]
+                loading
 
             Just page ->
                 editPage model page
@@ -147,6 +147,16 @@ view model =
     , selection = Skeleton.Page model.path
     , alerts = model.alerts
     }
+
+
+loading : Html Message
+loading =
+    div [ class "w-full h-screen flex flex-row items-center text-center" ]
+        [ h1 [ class "flex-grow font-normal text-orange-light text-3xl" ]
+            [ i [ class "fas fa-spinner fa-spin mr-3 text-orange-lighter" ] []
+            , text "Loading page..."
+            ]
+        ]
 
 
 editPage : Model -> Page.Page -> Html Message

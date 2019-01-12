@@ -206,12 +206,22 @@ view model =
                 editPost model post t
 
             _ ->
-                p [] [ text "Loading post to edit..." ]
+                loading
         ]
     , session = model.session
     , selection = Skeleton.Post model.url
     , alerts = model.alerts
     }
+
+
+loading : Html Message
+loading =
+    div [ class "w-full h-screen flex flex-row items-center text-center" ]
+        [ h1 [ class "flex-grow font-normal text-orange-light text-3xl" ]
+            [ i [ class "fas fa-spinner fa-spin mr-3 text-orange-lighter" ] []
+            , text "Loading post..."
+            ]
+        ]
 
 
 editPost : Model -> Microformats.Item -> PostType -> Html Message
