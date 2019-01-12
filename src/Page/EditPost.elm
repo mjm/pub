@@ -241,7 +241,7 @@ editPost model item t =
             )
         ]
         [ div [ class "flex flex-none flex-row items-baseline" ]
-            [ div [ class "relative w-12 mr-3" ]
+            [ div [ class "relative w-12 mr-3 flex-no-shrink" ]
                 [ div [ class "absolute w-full pt-px flex flex-row items-baseline justify-between pointer-events-none" ]
                     [ div [ class "mt-1 ml-2 pointer-events-none text-orange-darker" ]
                         [ i [ class ("fas fa-" ++ postTypeIcon t) ] [] ]
