@@ -16,6 +16,7 @@ import Page.EditPage as EditPage
 import Page.EditPost as EditPost
 import Page.Home as Home
 import Page.Login as Login
+import Page.NewPage as NewPage
 import Page.NewPost as NewPost
 import Ports
 import Session
@@ -40,6 +41,7 @@ type Page
     | EditPost EditPost.Model
     | NewPost NewPost.Model
     | EditPage EditPage.Model
+    | NewPage NewPage.Model
 
 
 type alias Flags =
@@ -109,6 +111,9 @@ getSession model =
         EditPage edit ->
             Session.LoggedIn edit.session
 
+        NewPage new ->
+            Session.LoggedIn new.session
+
 
 updateSession : (Session.Data -> Session.Data) -> Model -> Model
 updateSession f model =
@@ -155,6 +160,14 @@ updateSession f model =
 
                         _ ->
                             model.page
+
+                NewPage new ->
+                    case newSession of
+                        Session.LoggedIn data ->
+                            NewPage { new | session = data }
+
+                        _ ->
+                            model.page
     in
     { model | page = newPage }
 
@@ -190,6 +203,9 @@ view model =
         EditPage edit ->
             skeleton EditPageMsg (EditPage.view edit)
 
+        NewPage new ->
+            skeleton NewPageMsg (NewPage.view new)
+
 
 notFoundView : List (Html Message)
 notFoundView =
@@ -221,6 +237,7 @@ type Message
     | EditPostMsg EditPost.Message
     | NewPostMsg NewPost.Message
     | EditPageMsg EditPage.Message
+    | NewPageMsg NewPage.Message
 
 
 update : Message -> Model -> ( Model, Cmd Message )
@@ -318,6 +335,14 @@ update message model =
                 _ ->
                     ( model, Cmd.none )
 
+        NewPageMsg msg ->
+            case model.page of
+                NewPage new ->
+                    stepNewPage model (NewPage.update msg new)
+
+                _ ->
+                    ( model, Cmd.none )
+
 
 updatePageData : MPH.Data -> Model -> ( Model, Cmd Message )
 updatePageData pd model =
@@ -337,28 +362,28 @@ updatePages pages model =
     )
 
 
-stepLogin : Model -> ( Login.Model, Cmd Login.Message ) -> ( Model, Cmd Message )
 stepLogin =
     stepPage Login LoginMsg
 
 
-stepHome : Model -> ( Home.Model, Cmd Home.Message ) -> ( Model, Cmd Message )
 stepHome =
     stepPage Home HomeMsg
 
 
-stepEditPost : Model -> ( EditPost.Model, Cmd EditPost.Message ) -> ( Model, Cmd Message )
 stepEditPost =
     stepPage EditPost EditPostMsg
 
 
-stepNewPost : Model -> ( NewPost.Model, Cmd NewPost.Message ) -> ( Model, Cmd Message )
 stepNewPost =
     stepPage NewPost NewPostMsg
 
 
 stepEditPage =
     stepPage EditPage EditPageMsg
+
+
+stepNewPage =
+    stepPage NewPage NewPageMsg
 
 
 stepPage : (model -> Page) -> (msg -> Message) -> Model -> ( model, Cmd msg ) -> ( Model, Cmd Message )
@@ -379,6 +404,7 @@ type Route
     | EditPostRoute (Maybe String)
     | NewPostRoute (Maybe String)
     | EditPageRoute (Maybe String)
+    | NewPageRoute
 
 
 routeParser : Parser (Route -> a) a
@@ -390,6 +416,7 @@ routeParser =
         , map EditPostRoute (s "posts" </> s "edit" <?> Query.string "url")
         , map NewPostRoute (s "posts" </> s "new" <?> Query.string "type")
         , map EditPageRoute (s "pages" </> s "edit" <?> Query.string "path")
+        , map NewPageRoute (s "pages" </> s "new")
         ]
 
 
@@ -459,6 +486,10 @@ stepUrl url model =
         Just (EditPageRoute (Just path)) ->
             requireLoggedIn
                 (\sess -> stepEditPage model (EditPage.init sess path))
+
+        Just NewPageRoute ->
+            requireLoggedIn
+                (\sess -> stepNewPage model (NewPage.init model.key sess))
 
         _ ->
             ( { model | page = NotFound session }, Cmd.none )

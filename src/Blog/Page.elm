@@ -2,9 +2,11 @@ module Blog.Page exposing
     ( Page
     , all
     , decoder
+    , empty
     , encode
     , get
     , hasChanges
+    , setShortPath
     , shortPath
     , update
     )
@@ -21,6 +23,14 @@ type alias Page =
     { path : String
     , name : String
     , content : String
+    }
+
+
+empty : Page
+empty =
+    { path = "pages/"
+    , name = ""
+    , content = ""
     }
 
 
@@ -44,6 +54,11 @@ encode page =
 shortPath : Page -> String
 shortPath page =
     String.replace "pages/" "" page.path
+
+
+setShortPath : String -> Page -> Page
+setShortPath path page =
+    { page | path = "pages/" ++ path }
 
 
 hasChanges : Page -> Page -> Bool
