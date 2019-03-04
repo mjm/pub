@@ -8,6 +8,12 @@ action "Install dependencies" {
   args = "ci"
 }
 
+action "Run tests" {
+  needs = ["Install dependencies"]
+  uses = "./actions/elm"
+  runs = "elm-test"
+}
+
 action "Build app" {
   uses = "actions/npm@master"
   needs = ["Install dependencies"]
@@ -16,7 +22,7 @@ action "Build app" {
 
 action "Deploy app to S3" {
   uses = "actions/aws/cli@master"
-  needs = ["Build app"]
+  needs = ["Run tests", "Build app"]
   args = "s3 cp dist/ s3://pub.mattmoriarity.com/ --recursive --acl public-read"
   secrets = ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"]
 }
