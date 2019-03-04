@@ -2,6 +2,7 @@ module Urls exposing
     ( editPage
     , editPost
     , home
+    , newPage
     , newPost
     )
 
@@ -27,3 +28,8 @@ newPost pt =
 editPage : String -> String
 editPage path =
     "/pages/edit" ++ UB.toQuery [ UB.string "path" path ]
+
+
+newPage : String
+newPage =
+    "/pages/new"

@@ -56,8 +56,13 @@ view msgs toMsg details =
                     ]
                 , div [ class "flex flex-row flex-no-shrink items-baseline" ]
                     [ navHeader "Pages"
+                    , a
+                        [ class "text-orange pr-3 text-no-underline"
+                        , href Urls.newPage
+                        ]
+                        [ i [ class "fas fa-plus" ] [] ]
                     , button
-                        [ class "text-orange px-3"
+                        [ class "text-orange pr-3"
                         , onClick msgs.refreshPages
                         ]
                         [ i [ class "fas fa-redo-alt" ] [] ]
